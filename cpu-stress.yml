@@ -1,0 +1,13 @@
+---
+schemaVersion: '2.2'
+description: Run a CPU stress on an instance
+parameters:
+  duration:
+    type: String
+    description: 'Specify the duration - in seconds - of the CPU burn. (Required) '
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosAttackCPU
+  inputs:
+    runCommand:
+    - stress-ng --matrix 1 -t {{ duration }}s

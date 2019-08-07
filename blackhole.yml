@@ -1,0 +1,26 @@
+---
+schemaVersion: '2.2'
+description: Blackhole a protocol/port on an instance
+parameters:
+  protocol:
+    type: String
+    description: Specify the protocol to blackhole. (Required)
+    allowedValues:
+      - tcp
+      - udp
+  port:
+    type: String
+    description: Specify the port to blackhole. (Required)
+  duration:
+    type: String
+    description: The duration - in seconds - of the blackhole. (Required)
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosAttackBlackhole
+  inputs:
+    runCommand:
+    - iptables -A INPUT -p {{ protocol }} --dport {{ port }} -j DROP
+    - iptables -A OUTPUT -p {{ protocol }} --dport {{ port }} -j DROP
+    - sleep {{ duration }}
+    - iptables -D INPUT -p {{ protocol }} --dport {{ port }} -j DROP
+    - iptables -D OUTPUT -p {{ protocol }} --dport {{ port }} -j DROP
