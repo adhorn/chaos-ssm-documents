@@ -5,6 +5,7 @@ parameters:
   duration:
     type: String
     description: 'Specify the duration - in seconds - of the CPU burn. (Required) '
+    default: "60"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosAttackCPU

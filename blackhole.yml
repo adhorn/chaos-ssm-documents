@@ -14,6 +14,7 @@ parameters:
   duration:
     type: String
     description: The duration - in seconds - of the blackhole. (Required)
+    default: "60"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosAttackBlackhole
