@@ -17,7 +17,7 @@ parameters:
     default: "60"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosAttackBlackhole
+  name: ChaosBlackholeAttack
   inputs:
     runCommand:
     - iptables -A INPUT -p {{ protocol }} --dport {{ port }} -j DROP

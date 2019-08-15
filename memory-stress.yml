@@ -1,0 +1,23 @@
+---
+schemaVersion: '2.2'
+description: Run a memory stress on an instance
+parameters:
+  duration:
+    type: String
+    description: 'Specify the duration - in seconds - of the Memory stress. (Required) '
+    default: "60"
+  vm:
+    type: String
+    description: 'Specify the number of virtual memory stressors to use (default all)'
+    default: "0"
+  percent:
+    type: String
+    description: 'Specify the percentage of virtual memory to use (default 80)'
+    default: "80"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosMemoryAttack
+  inputs:
+    runCommand:
+    # https://www.mankier.com/1/stress-ng#Examples
+    - stress-ng --vm {{ vm }} --vm-bytes {{ percent }}% -t {{ duration }}s

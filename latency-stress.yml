@@ -16,7 +16,7 @@ parameters:
     default: "60"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosAttackLatency
+  name: ChaosLatencyAttack
   inputs:
     runCommand:
     - tc qdisc del dev {{ interface }} root
