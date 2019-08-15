@@ -8,8 +8,8 @@ parameters:
     default: "60"
   vm:
     type: String
-    description: 'Specify the number of virtual memory stressors to use (default all)'
-    default: "0"
+    description: 'Specify the number of virtual memory stressors to use (default 1)'
+    default: "1"
   percent:
     type: String
     description: 'Specify the percentage of virtual memory to use (default 80)'

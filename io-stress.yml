@@ -1,0 +1,23 @@
+---
+schemaVersion: '2.2'
+description: Run a IO stress on an instance
+parameters:
+  duration:
+    type: String
+    description: 'Specify the duration - in seconds - of the IO stress. (Required) '
+    default: "60"
+  iomix:
+    type: String
+    description: 'Specify the number of mixed IO stressors to use (default 1)'
+    default: "1"
+  percent:
+    type: String
+    description: 'Specify the percentage the % of the available file system space used by each stressor. (default 80)'
+    default: "80"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosIOAttack
+  inputs:
+    runCommand:
+    # https://www.mankier.com/1/stress-ng#Examples
+    - stress-ng --iomix {{ iomix }} --iomix-bytes {{ percent }}% -t {{ duration }}s
