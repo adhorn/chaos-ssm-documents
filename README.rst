@@ -1,5 +1,5 @@
 
-Chaos Injection for AMAZON EC2 instances or containers using SSM
+Chaos Injection for Amazon EC2 instances or containers using SSM
 ================================================================
 
 |issues| |maintenance| |twitter| 
