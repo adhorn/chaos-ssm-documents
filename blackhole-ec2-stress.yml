@@ -1,0 +1,25 @@
+---
+schemaVersion: '2.2'
+description: Block access to EC2 control plane on an instance 
+parameters:
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosBlackholeEC2Attack
+  inputs:
+    runCommand:
+    # Block some Amazon EC2 API endpoints, add yours :)
+    # make copy of /etc/hosts to /etc/host.back
+    - sudo cp /etc/hosts /etc/hosts.back
+    - echo "127.0.0.1 ec2.us-east-1.amazonaws.com" >> /etc/hosts
+    - echo "127.0.0.1 ec2.us-east-2.amazonaws.com" >> /etc/hosts
+    - echo "127.0.0.1 ec2.us-west-1.amazonaws.com" >> /etc/hosts
+    - echo "127.0.0.1 ec2.us-west-2.amazonaws.com" >> /etc/hosts
+    - echo "127.0.0.1 ec2.eu-west-1.amazonaws.com" >> /etc/hosts
+    - echo "127.0.0.1 ec2.eu-north-1.amazonaws.com" >> /etc/hosts
+    - sleep {{ duration }}
+    # copy back the old version  /etc/hosts
+    - sudo cp /etc/hosts.back /etc/hosts
