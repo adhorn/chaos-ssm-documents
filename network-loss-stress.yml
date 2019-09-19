@@ -1,0 +1,30 @@
+---
+schemaVersion: '2.2'
+description: Adding packet loss to the network (default eth0)
+parameters:
+  interface:
+    type: String
+    description: Specify the interface to add loss to. (Required)
+    default: eth0
+  loss:
+    type: String
+    description: The % of packet to drop.
+    default: "7"
+  correlation:
+    type: String
+    description: The correlation with previous packet loss.
+    default: "25"
+  # Drops 7% of packets with 25% correlation
+  # 7% is enough that TCP will not fail completely
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosPacketLossAttack
+  inputs:
+    runCommand:
+    - tc qdisc add dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%
+    - sleep {{ duration }}
+    - tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%

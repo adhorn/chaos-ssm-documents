@@ -4,7 +4,7 @@ description: Run a IO stress on an instance
 parameters:
   duration:
     type: String
-    description: 'Specify the duration - in seconds - of the IO stress. (Required) '
+    description: The duration - in seconds - of the attack. (Required)
     default: "60"
   iomix:
     type: String

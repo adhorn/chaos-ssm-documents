@@ -1,0 +1,18 @@
+---
+schemaVersion: '2.2'
+description: Block DNS on an instance
+parameters:
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosBlackholeDNSAttack
+  inputs:
+    runCommand:
+    - iptables -A INPUT -p tcp -m tcp --dport 53 -j DROP
+    - iptables -A INPUT -p udp -m udp --dport 53 -j DROP
+    - sleep {{ duration }}
+    - iptables -D INPUT -p tcp -m tcp --dport 53 -j DROP
+    - iptables -D INPUT -p udp -m udp --dport 53 -j DROP

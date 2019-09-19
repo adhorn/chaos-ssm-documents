@@ -1,6 +1,6 @@
 ---
 schemaVersion: '2.2'
-description: Adding latency on the network (default eth0)
+description: Adding latency with delta +- on the network (default eth0)
 parameters:
   interface:
     type: String
@@ -9,16 +9,22 @@ parameters:
   delay:
     type: String
     description: The delay to add to the interface in milliseconds.
-    default: "200"
+    default: "1000"
+  delta:
+    type: String
+    description: The delta +- to add to the delay in milliseconds.
+    default: "500"
+  # Adds 1000ms +- 500ms of latency to each packet
   duration:
     type: String
     description: The duration - in seconds - of the attack. (Required)
     default: "60"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosLatencyAttack
+  name: ChaosLatencyDeltaAttack
   inputs:
     runCommand:
-    - tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms
+    - tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms
     - sleep {{ duration }}
-    - tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms
+    - tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms
+

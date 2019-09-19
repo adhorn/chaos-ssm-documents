@@ -1,0 +1,25 @@
+---
+schemaVersion: '2.2'
+description: Corrupt the network traffic (default eth0)
+parameters:
+  interface:
+    type: String
+    description: Specify the interface to add loss to. (Required)
+    default: eth0
+  corrupt:
+    type: String
+    description: The % of corrupt to add to the network.
+    default: "5"
+    # Corrupts 5% of packets
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosNetCorruptAttack
+  inputs:
+    runCommand:
+    - tc qdisc add dev {{ interface }} root netem corrupt {{ corrupt }}%
+    - sleep {{ duration }}
+    - tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%
