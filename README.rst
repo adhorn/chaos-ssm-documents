@@ -47,7 +47,15 @@ Upload one document at a time
     aws ssm create-document --content file://cpu-stress.yml --name "cpu-stress" --document-type "Command" --document-format YAML
 
 
+SOME WORDS OF CAUTION BEFORE YOU START BREAKING THINGS:
+-------------------------------------------------------
+
+* To begin with, DO NOT use these chaos injection commands in production blindly!!
+* Always review the SSM documents and the commands in them.
+* Make sure your first chaos injections are done in a test environment and on test instances where no real and paying customer can be affected.
+* Test, test, and test more. Remember that chaos engineering is about breaking things in a controlled environment and through well-planned experiments to build confidence in your application — and you own tools — to withstand turbulent conditions.
+
 More information:
 -----------------
 
-`Blog post <https://www.medium.com/@adhorn>`_
+`PLease read the following Blog post to understand in details how to use these SSM Documents. <https://www.medium.com/@adhorn>`_
