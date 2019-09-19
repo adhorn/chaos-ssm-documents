@@ -22,11 +22,18 @@ Collection of `SSM Documents <https://docs.aws.amazon.com/systems-manager/latest
 This allows to conduct small chaos engineering experiments for your Amazon EC2 instances and container based applications
 in the `AWS Cloud <https://aws.amazon.com>`_.
 
-* Support for Latency injection using ``latency-stress.yml``
+* Support for latency injection using ``latency-stress.yml``
+* Support for latency with delta stress using ``latency-delta-stress.yml``
 * Support for CPU burn using ``spu-stress.yml``
 * Support for IO stress using ``io-stress.yml``
-* Support for Memory stress using ``memory-stress.yml``
-* Support for blackhole stress using ``blackhole-stress.yml``
+* Support for memory stress using ``memory-stress.yml``
+* Support for network stress using ``network-corruption-stress.yml``
+* Support for packet Loss stress using ``network-loss-stress.yml``
+* Support for configurable blackhole stress using ``blackhole-stress.yml``
+* Support for blackhole S3 stress using ``blackhole-s3-stress.yml``
+* Support for blackhole DynamoDB stress using ``blackhole-dynamo-stress.yml``
+* Support for blackhole EC2 stress using ``blackhole-ec2-stress.yml``
+* Support for blackhole DNS stress using ``blackhole-dns-stress.yml``
 
 Upload all of the SSM Documents to the AWS region of your choice
 ----------------------------------------------------------------
