@@ -22,6 +22,8 @@ Collection of `SSM Documents <https://docs.aws.amazon.com/systems-manager/latest
 This allows to conduct small chaos engineering experiments for your Amazon EC2 instances and container based applications
 in the `AWS Cloud <https://aws.amazon.com>`_.
 
+To learn how to use these SSM Documents - please check `this link <https://medium.com/@adhorn/injecting-chaos-to-amazon-ec2-using-amazon-system-manager-ca95ee7878f5>`_
+
 * Support for latency injection using ``latency-stress.yml``
 * Support for latency with delta stress using ``latency-delta-stress.yml``
 * Support for CPU burn using ``spu-stress.yml``
@@ -65,4 +67,4 @@ SOME WORDS OF CAUTION BEFORE YOU START BREAKING THINGS:
 More information:
 -----------------
 
-`PLease read the following Blog post to understand in details how to use these SSM Documents. <https://www.medium.com/@adhorn>`_
+`Please read the following Blog post to understand in details how to use these SSM Documents. <https://medium.com/@adhorn/injecting-chaos-to-amazon-ec2-using-amazon-system-manager-ca95ee7878f5>`_
