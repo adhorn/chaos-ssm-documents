@@ -18,7 +18,7 @@ Chaos Injection for Amazon EC2 instances or containers using SSM
 
 
 
-Collection of `SSM Documents <https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-ssm-docs.html/>`_.
+Collection of `SSM Documents <https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-ssm-docs.html>`_.
 This allows to conduct small chaos engineering experiments for your Amazon EC2 instances and container based applications
 in the `AWS Cloud <https://aws.amazon.com>`_.
 
