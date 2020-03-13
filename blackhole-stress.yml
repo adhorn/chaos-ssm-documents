@@ -4,7 +4,7 @@ description: Blackhole a protocol/port on an instance
 parameters:
   protocol:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
+    description: Specify the protocol to blackhole. Options: tcp, udp (Required)
     allowedValues:
       - tcp
       - udp
