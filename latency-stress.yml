@@ -12,13 +12,12 @@ parameters:
     default: "200"
   duration:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
-    default: "60"
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosLatencyAttack
   inputs:
     runCommand:
+    - echo "tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms" | at now + {{ duration }} minutes
     - tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms
-    - sleep {{ duration }}
-    - tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms

@@ -13,13 +13,12 @@ parameters:
     # Corrupts 5% of packets
   duration:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
-    default: "60"
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosNetCorruptAttack
   inputs:
     runCommand:
+    - echo "tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%" | at now + {{ duration }} minutes
     - tc qdisc add dev {{ interface }} root netem corrupt {{ corrupt }}%
-    - sleep {{ duration }}
-    - tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%
