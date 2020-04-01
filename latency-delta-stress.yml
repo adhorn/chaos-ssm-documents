@@ -17,14 +17,12 @@ parameters:
   # Adds 1000ms +- 500ms of latency to each packet
   duration:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
-    default: "60"
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosLatencyDeltaAttack
   inputs:
     runCommand:
+    - echo "tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms" | at now + {{ duration }} minutes
     - tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms
-    - sleep {{ duration }}
-    - tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms
-

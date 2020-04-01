@@ -18,13 +18,12 @@ parameters:
   # 7% is enough that TCP will not fail completely
   duration:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
-    default: "60"
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosPacketLossAttack
   inputs:
     runCommand:
+    - echo "tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%" | at now + {{ duration }} minutes
     - tc qdisc add dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%
-    - sleep {{ duration }}
-    - tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%
