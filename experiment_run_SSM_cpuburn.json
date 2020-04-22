@@ -1,0 +1,77 @@
+{
+    "version": "1.0.0",
+    "title": "Running a CPU burn on EC2 instances using SSM Run Command",
+    "description": "Running a CPU burn on EC2 instances using SSM Run Command",
+    "tags": ["cpu"],
+    "configuration": {
+        "endpoint_url": {
+            "type": "env",
+            "key": "ENDPOINT_URL"
+        },
+        "instance_id": {
+            "type": "env",
+            "key": "INSTANCE_ID"
+        },
+        "duration": "30",
+        "cpu": "0"
+    },
+    "contributions": {  
+        "reliability": "medium",
+        "security": "none",
+        "scalability": "medium"
+    },
+    "steady-state-hypothesis": {
+        "title": "Application responds within 6 seconds",
+        "probes": [
+            {
+                "name": "http-response-time",
+                "type": "probe",
+                "provider": {
+                    "type": "python",
+                    "module": "chaoscloud.probes.http",
+                    "func": "time_http_call",
+                    "arguments": {
+                        "url": "${endpoint_url}"
+                    }
+                },
+                "tolerance": {
+                    "name": "http-response-time-under",
+                    "type": "probe",
+                    "provider": {
+                        "type": "python",
+                        "module": "chaoscloud.tolerances.http",
+                        "func": "response_time_under",
+                        "arguments": {
+                            "duration": 6000
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "method": [
+        {
+            "type": "action",
+            "name": "inject-cpu",
+            "provider": {
+                "type": "process",
+                "path": "aws",
+                "arguments": "ssm send-command --document-name \"cpu-stress\" --document-version \"1\" --targets '[{\"Key\":\"InstanceIds\",\"Values\":[\"${instance_id}\"]}]' --parameters '{\"duration\":[\"${duration}\"],\"cpu\":[\"${cpu}\"]}' --timeout-seconds 60 --max-concurrency \"50\" --max-errors \"0\"  --output-s3-bucket-name \"adhorn-chaos-ssm-output\" --cloud-watch-output-config '{\"CloudWatchOutputEnabled\":true}' --region eu-west-1 --query 'Command.CommandId' --output text > CommandId.info"
+            }
+        }
+    ],
+    "rollbacks": [
+        {
+            "type": "action",
+            "name": "Stop SSM run command",
+            "provider": {
+                "type": "process",
+                "path": "aws",
+                "arguments": "ssm cancel-command --command-id $(cat CommandId.info) "
+            },
+            "pauses": {
+                "after": 30
+            }
+        }
+    ]
+}
