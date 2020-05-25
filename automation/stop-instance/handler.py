@@ -61,7 +61,7 @@ def run(az_name, tag, duration=60, log_level='INFO'):
 
     if instance_id and duration:
         print('Attempting to rollback')
-        time.sleep(duration)x
+        time.sleep(duration)
         rollback(ec2_client, instance_id)
 
 
