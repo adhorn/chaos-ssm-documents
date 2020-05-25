@@ -1,0 +1,57 @@
+---
+schemaVersion: '0.3'
+description: Execute CPU stress via Run Command
+assumeRole: "{{AutomationAssumeRole}}"
+parameters:
+  AutomationAssumeRole:
+    type: String
+    description: "The ARN of the role that allows Automation to perform the actions on your behalf."
+    default: ''
+  InstanceIds:
+    type: StringList
+    description: "(Required) EC2 Instance(s) to terminate"
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+  cpu:
+    type: String
+    description: 'Specify the number of CPU stressors to use (default all)'
+    default: "0"
+mainSteps:
+  - name: verifyInstanceStateRunningBefore
+    action: aws:waitForAwsResourceProperty
+    # timeout is strongly encouraged for action
+    timeoutSeconds: 60
+    inputs:
+      Service: ec2
+      Api: DescribeInstanceStatus
+      InstanceIds:
+        - "{{ InstanceIds }}"
+      PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
+      DesiredValues:
+        - running
+  - name: RunChaosCPU
+    action: aws:runCommand
+    maxAttempts: 3
+    timeoutSeconds: 60
+    onFailure: Abort
+    inputs:
+      DocumentName: cpu-stress
+      InstanceIds: 
+        - "{{ InstanceIds }}"
+      Parameters:
+        cpu: "{{ cpu }}"
+        duration: "{{ duration }}"
+  - name: verifyInstanceStateRunningAfter
+    action: aws:waitForAwsResourceProperty
+    # timeout is strongly encouraged for action
+    timeoutSeconds: 60
+    inputs:
+      Service: ec2
+      Api: DescribeInstanceStatus
+      InstanceIds:
+        - "{{ InstanceIds }}"
+      PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
+      DesiredValues:
+        - running
