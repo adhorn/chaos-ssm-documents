@@ -13,6 +13,9 @@ parameters:
   TagValue:
     type: String
     description: "The tag:value to filter instances"
+  FunctionName:
+    type: String
+    description: "The tag:value to filter instances"
 mainSteps:
   - name: invokeStopRandomInstances
     action: aws:invokeLambdaFunction
@@ -20,5 +23,5 @@ mainSteps:
     timeoutSeconds: 120
     onFailure: Abort
     inputs:
-      FunctionName: AutomationStopRandom-dev-hello
+      FunctionName: "{{FunctionName}}"
       Payload: "{\"tagValue\":\"{{TagValue}}\", \"availabilityZone\":\"{{AvailabilityZone}}\"}"
