@@ -1,5 +1,5 @@
 ---
-description: Stop instances in a particular AZ with tag filter
+description: Stop a random instance in a particular AZ with tag filter
 schemaVersion: '0.3'
 assumeRole: "{{ AutomationAssumeRole }}"
 parameters:
@@ -96,3 +96,5 @@ mainSteps:
 
 outputs:
 - "listInstances.InstanceIds"
+
+
