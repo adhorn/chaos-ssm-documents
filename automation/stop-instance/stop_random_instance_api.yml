@@ -48,9 +48,6 @@ mainSteps:
          InstanceId = random.choice(events['InstanceIds'])
          return { 'InstanceId' : InstanceId }
   outputs:
-    - Name: Payload
-      Selector: $.Payload
-      Type: StringMap
     - Name: InstanceId
       Selector: $.Payload.InstanceId
       Type: String
