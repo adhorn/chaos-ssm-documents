@@ -1,0 +1,27 @@
+---
+schemaVersion: '0.3'
+description: Execute StopRandomInstance via AWS Lambda
+assumeRole: "{{AutomationAssumeRole}}"
+parameters:
+  AutomationAssumeRole:
+    type: String
+    description: "The ARN of the role that allows Automation to perform the actions on your behalf."
+    default: ''
+  AvailabilityZone:
+    type: String
+    description: "(Required) The Availability Zone to impact"
+  TagValue:
+    type: String
+    description: "The tag:value to filter instances"
+  FunctionName:
+    type: String
+    description: "The tag:value to filter instances"
+mainSteps:
+  - name: invokeStopRandomInstances
+    action: aws:invokeLambdaFunction
+    maxAttempts: 1
+    timeoutSeconds: 120
+    onFailure: Abort
+    inputs:
+      FunctionName: "{{FunctionName}}"
+      Payload: "{\"tagValue\":\"{{TagValue}}\", \"availabilityZone\":\"{{AvailabilityZone}}\"}"

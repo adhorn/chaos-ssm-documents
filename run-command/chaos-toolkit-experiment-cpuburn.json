@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "title": "Running a CPU burn on EC2 instances using SSM Run Command",
+    "title": "Chaos Toolkit: Running a CPU burn experiment on EC2 instances using SSM Run Command",
     "description": "Running a CPU burn on EC2 instances using SSM Run Command",
     "tags": ["cpu"],
     "configuration": {
