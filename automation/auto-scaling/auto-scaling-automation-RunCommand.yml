@@ -5,7 +5,7 @@ assumeRole: "{{AutomationAssumeRole}}"
 parameters:
   AutomationAssumeRole:
     type: String
-    description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+    description: "The ARN of the role that allows Automation to perform the actions on your behalf."
     default: ''
   InstanceIds:
     type: StringList
@@ -21,7 +21,6 @@ parameters:
 mainSteps:
   - name: verifyInstanceStateRunningBefore
     action: aws:waitForAwsResourceProperty
-    # timeout is strongly encouraged for action - aws:waitForAwsResourceProperty
     timeoutSeconds: 60
     inputs:
       Service: ec2
@@ -34,7 +33,7 @@ mainSteps:
   - name: RunChaosCPU
     action: aws:runCommand
     maxAttempts: 3
-    timeoutSeconds: 1200
+    timeoutSeconds: 60
     onFailure: Abort
     inputs:
       DocumentName: cpu-stress
@@ -45,7 +44,7 @@ mainSteps:
         duration: "{{ duration }}"
   - name: verifyInstanceStateRunningAfter
     action: aws:waitForAwsResourceProperty
-    # timeout is strongly encouraged for action - aws:waitForAwsResourceProperty
+    # timeout is strongly encouraged for action
     timeoutSeconds: 60
     inputs:
       Service: ec2

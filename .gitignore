@@ -5,6 +5,7 @@
 .chaosiq
 journal.json
 *.log
+.serverless
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
