@@ -1,3 +1,7 @@
+### Experimental
+The Windows Run Commands are all currently experimental 
+and should not be used until we have tested more throughly
+
 ### What is a Run Command?
 Read [this blog](https://medium.com/@adhorn/injecting-chaos-to-amazon-ec2-using-amazon-system-manager-ca95ee7878f5) 
 for background.
