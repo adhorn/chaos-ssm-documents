@@ -1,0 +1,46 @@
+description: >-
+  # Blackhole DNS Stress
+
+  Block DNS on an instance. 
+
+  You can find this Document on
+  [Github](https://github.com/thebeebs/chaos-ssm-documents/blob/master/blackhole-dns-stress.yml).
+schemaVersion: '0.3'
+parameters:
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+mainSteps:
+  - name: ALTERDNS
+    action: 'aws:executeScript'
+    inputs:
+      Runtime: PowerShell Core 6.0
+      Handler: ''
+      Script: >-
+        New-NetFirewallRule -DisplayName "Block Outbound Port  53" -Direction
+        Outbound -LocalPort 53 -Protocol TCP -Action Block
+
+        New-NetFirewallRule -DisplayName "Block Outbound Port  53" -Direction
+        Outbound -LocalPort 53 -Protocol UDP -Action Block
+  - name: Pause
+    action: 'aws:executeScript'
+    inputs:
+      Runtime: PowerShell Core 6.0
+      Handler: ''
+      Script: Start-Sleep -s 60
+    outputs:
+      - Name: message
+        Selector: $.Payload.message
+        Type: String
+  - name: Revert
+    action: 'aws:executeScript'
+    inputs:
+      Runtime: PowerShell Core 6.0
+      Handler: ''
+      Script: >-
+        New-NetFirewallRule -DisplayName "Unblock Outbound Port  53" -Direction
+        Outbound -LocalPort 53 -Protocol TCP -Action Allow
+
+        New-NetFirewallRule -DisplayName "Unblock Outbound Port  53" -Direction
+        Outbound -LocalPort 53 -Protocol UDP -Action Allow
+    description: Allow port 53
