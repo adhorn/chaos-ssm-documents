@@ -1,46 +1,38 @@
 description: >-
   # Blackhole DNS Stress
 
-  Block DNS on an instance. 
+  Block DNS on a windows instance. 
 
-  You can find this Document on
-  [Github](https://github.com/thebeebs/chaos-ssm-documents/blob/master/blackhole-dns-stress.yml).
-schemaVersion: '0.3'
+schemaVersion: "2.2"
 parameters:
   duration:
     type: String
     description: The duration - in seconds - of the attack. (Required)
+    default: "60"
 mainSteps:
   - name: ALTERDNS
-    action: 'aws:executeScript'
+    action: "aws:runPowerShellScript"
     inputs:
-      Runtime: PowerShell Core 6.0
-      Handler: ''
-      Script: >-
-        New-NetFirewallRule -DisplayName "Block Outbound Port  53" -Direction
-        Outbound -LocalPort 53 -Protocol TCP -Action Block
-
-        New-NetFirewallRule -DisplayName "Block Outbound Port  53" -Direction
-        Outbound -LocalPort 53 -Protocol UDP -Action Block
+      runCommand:
+      - $addresses = Get-DnsClientServerAddress -AddressFamily "IPv4" | select -ExpandProperty ServerAddresses; New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol UDP -Action Block -RemoteAddress $addresses;New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol TCP -Action Block -RemoteAddress $addresses
+  - name: runtestfail
+    action: "aws:runPowerShellScript"
+    inputs:
+      runCommand:
+      - Resolve-DnsName -Name www.amazon.com -DnsOnly
   - name: Pause
-    action: 'aws:executeScript'
+    action: 'aws:runPowerShellScript'
     inputs:
-      Runtime: PowerShell Core 6.0
-      Handler: ''
-      Script: Start-Sleep -s 60
-    outputs:
-      - Name: message
-        Selector: $.Payload.message
-        Type: String
+      runCommand:
+      - "Start-Sleep -s {{duration}}"
+          
   - name: Revert
-    action: 'aws:executeScript'
+    action: 'aws:runPowerShellScript'
     inputs:
-      Runtime: PowerShell Core 6.0
-      Handler: ''
-      Script: >-
-        New-NetFirewallRule -DisplayName "Unblock Outbound Port  53" -Direction
-        Outbound -LocalPort 53 -Protocol TCP -Action Allow
-
-        New-NetFirewallRule -DisplayName "Unblock Outbound Port  53" -Direction
-        Outbound -LocalPort 53 -Protocol UDP -Action Allow
-    description: Allow port 53
+      runCommand:
+      - Remove-NetFirewallRule -DisplayName "CHAOS Block DNS IP address"
+  - name: runtestpass
+    action: "aws:runPowerShellScript"
+    inputs:
+      runCommand:
+        - Resolve-DnsName -Name www.amazon.com -DnsOnly
