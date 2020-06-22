@@ -14,7 +14,10 @@ mainSteps:
     action: "aws:runPowerShellScript"
     inputs:
       runCommand:
-      - $addresses = Get-DnsClientServerAddress -AddressFamily "IPv4" | select -ExpandProperty ServerAddresses; New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol UDP -Action Block -RemoteAddress $addresses;New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol TCP -Action Block -RemoteAddress $addresses
+      - |
+        $addresses = Get-DnsClientServerAddress -AddressFamily "IPv4" | select -ExpandProperty ServerAddresses 
+        New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol UDP -Action Block -RemoteAddress $addresses
+        New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol TCP -Action Block -RemoteAddress $addresses
   - name: runtestfail
     action: "aws:runPowerShellScript"
     inputs:
@@ -24,8 +27,7 @@ mainSteps:
     action: 'aws:runPowerShellScript'
     inputs:
       runCommand:
-      - "Start-Sleep -s {{duration}}"
-          
+      - "Start-Sleep -s {{duration}}"         
   - name: Revert
     action: 'aws:runPowerShellScript'
     inputs:
