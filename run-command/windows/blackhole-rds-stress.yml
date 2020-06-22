@@ -1,0 +1,34 @@
+description: >-
+  # Blackhole EC2 Stress
+
+  Block EC2 on a windows instance. 
+
+schemaVersion: "2.2"
+parameters:
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+  regions:
+    type: String
+    description: The regions you would like to block (Required)
+    default: "us-east-1,us-west-1,eu-west-1,eu-west-2"
+mainSteps:
+  - name: AlterFirewall
+    action: "aws:runPowerShellScript"
+    inputs:
+      runCommand:
+        - |
+          New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Outbound –LocalPort 3306 -Protocol TCP -Action Block | Out-Null
+          New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Inbound –LocalPort 3306 -Protocol TCP -Action Block | Out-Null
+          Write-Host "Blocked Port 3306 Outbound and Inbound"
+  - name: Pause
+    action: 'aws:runPowerShellScript'
+    inputs:
+      runCommand:
+        - "Start-Sleep -s {{duration}}"
+  - name: Revert
+    action: 'aws:runPowerShellScript'
+    inputs:
+      runCommand:
+        - Remove-NetFirewallRule -DisplayName "CHAOS Block RDS"
