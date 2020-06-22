@@ -1,7 +1,7 @@
 description: >-
-  # Blackhole EC2 Stress
+  # Blackhole RDS Stress
 
-  Block EC2 on a windows instance. 
+  Block RDS on a windows instance. 
 
 schemaVersion: "2.2"
 parameters:
