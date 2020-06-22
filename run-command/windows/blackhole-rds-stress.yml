@@ -9,10 +9,6 @@ parameters:
     type: String
     description: The duration - in seconds - of the attack. (Required)
     default: "60"
-  regions:
-    type: String
-    description: The regions you would like to block (Required)
-    default: "us-east-1,us-west-1,eu-west-1,eu-west-2"
 mainSteps:
   - name: AlterFirewall
     action: "aws:runPowerShellScript"
