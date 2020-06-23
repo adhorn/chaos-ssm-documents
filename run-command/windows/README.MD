@@ -89,4 +89,27 @@ To Update the document on Windows:
 ```bash
 aws ssm update-document --content file://blackhole-dynamo-stress.yml --name "blackhole-dynamo-stress" --document-version "$LATEST"
 ```
+
+### cpu-stress.yml
+
+The CPU stress document checks to see how many logical processors an instance has then spawns 
+that number of background tasks.
+
+Each task runs some tight loops with a expensive calculation that should Max the CPU.
+
+During the test we measure the CPU load twice and Write this to the log. It should be 100% or there abouts.
+ 
+
+Using the CLI:
+```bash
+aws ssm create-document --content file://cpu-stress.yml --name "cpu-stress" --document-type "Command" --document-format YAML
+```
+To Update the document:
+```bash
+aws ssm update-document --content file://cpu-stress.yml --name "cpu-stress" --document-version '$LATEST'
+```
+To Update the document on Windows:
+```bash
+aws ssm update-document --content file://cpu-stress.yml --name "cpu-stress" --document-version "$LATEST"
+```
                      
