@@ -1,5 +1,5 @@
 ---
-description: Detach non-root ebs volume from instance without stopping it (describe instance api)
+description: Detach non-root ebs volume from instance without stopping it (describe volume API)
 schemaVersion: '0.3'
 assumeRole: "{{ AutomationAssumeRole }}"
 parameters:
@@ -17,21 +17,23 @@ parameters:
     description: "(Optional) The ARN of the role that allows Automation to perform
       the actions on your behalf."
 mainSteps:
-- name: listInstances
+- name: describeVolume
   action: aws:executeAwsApi
   timeoutSeconds: 60
   onFailure: Abort
   inputs:
     Service: ec2
-    Api: DescribeInstances
+    Api: DescribeVolumes
+    VolumeIds: ["{{ VolumeId }}"]
     Filters:
-    -  Name: block-device-mapping.volume-id
-       Values: ["{{ VolumeId }}"]
     -  Name: tag:{{ TagName }}
        Values: ["{{ TagValue }}"]
   outputs:
     - Name: InstanceId
-      Selector: "$.Reservations[0].Instances[0].InstanceId"
+      Selector: "$.Volumes[0].Attachments[0].InstanceId"
+      Type: String
+    - Name: DeviceType
+      Selector: "$.Volumes[0].Attachments[0].Device"
       Type: String
 - name: detachEbsVolume
   action: aws:executeAwsApi
@@ -41,7 +43,7 @@ mainSteps:
     Service: ec2
     Api: DetachVolume
     VolumeId: "{{ VolumeId }}"
-    InstanceId: "{{ listInstances.InstanceId }}"
+    InstanceId: "{{ describeVolume.InstanceId }}"
   outputs:
     - Name: EbsState
       Selector: "$.State"
@@ -68,6 +70,6 @@ mainSteps:
     - "{{ VolumeId }}"
     Tags:
     - Key: chaosAction
-      Value: Detachedfrom"{{ listInstances.InstanceId }}"
+      Value: Detachedfrom"{{ describeVolume.InstanceId }}"ofType{{ describeVolume.DeviceType }}
 outputs:
-- "listInstances.InstanceId"
+- "describeVolume.InstanceId"
