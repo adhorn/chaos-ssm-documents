@@ -1,5 +1,5 @@
 ---
-description: Select random EC2 instance in AZ, tag and detach its ebs root volume, and stop the instance.
+description: Select random EC2 instance in AZ, tag its ebs root volume, stop the instance, and detach the root volume
 schemaVersion: '0.3'
 assumeRole: "{{ AutomationAssumeRole }}"
 parameters:
