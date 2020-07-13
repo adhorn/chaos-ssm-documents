@@ -1,5 +1,5 @@
 ---
-description: Detach non-root ebs volume from instance without stopping it (describe instance api)
+description: Detach the volume only if the ec2 instance has the specified tags (describe-instances api)
 schemaVersion: '0.3'
 assumeRole: "{{ AutomationAssumeRole }}"
 parameters:
