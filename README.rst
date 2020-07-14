@@ -30,6 +30,7 @@ To use SSM Automation, check `the link <https://medium.com/@adhorn/creating-your
 * Support for randomly stopping EC2 instances via API
 * Support for randomly stopping EC2 instances via AWS Lambda
 * Support for CPU stress scenario via Run Command
+* Support for detaching EBS volumes from EC2 instances via API (ec2, ebs)
 
 
 Upload an SSM Automation document:
