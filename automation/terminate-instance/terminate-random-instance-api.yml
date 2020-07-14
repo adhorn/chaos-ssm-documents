@@ -1,0 +1,84 @@
+---
+description: Reboot a random instance in a particular AZ with tag filter
+schemaVersion: '0.3'
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  AvailabilityZone:
+    type: String
+    description: "(Required) The Availability Zone to impact"
+  TagName:
+    type: String
+    description: "The tag name to filter instances"
+  TagValue:
+    type: String
+    description: "The tag value to filter instances"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform
+      the actions on your behalf."
+mainSteps:
+- name: listInstances
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    Filters:
+    -  Name: availability-zone
+       Values: ["{{ AvailabilityZone }}"]
+    -  Name: instance-state-name
+       Values: ["running"]
+    -  Name: tag:{{ TagName }}
+       Values: ["{{ TagValue }}"]
+  outputs:
+    - Name: InstanceIds
+      Selector: "$.Reservations..Instances..InstanceId"
+      Type: StringList
+- name: SelectRandomInstance
+  action: aws:executeScript
+  inputs:
+    Runtime: python3.6
+    Handler: getRandomInstance
+    InputPayload:
+      InstanceIds:
+        - "{{ listInstances.InstanceIds }}"
+    Script: |-
+      def getRandomInstance(events, context):
+         import random
+         InstanceId = random.choice(events['InstanceIds'])
+         return { 'InstanceId' : InstanceId }
+  outputs:
+    - Name: InstanceId
+      Selector: $.Payload.InstanceId
+      Type: String
+- name: terminateInstances
+  action: aws:changeInstanceState
+  onFailure: Continue
+  inputs:
+    InstanceIds: 
+      - "{{ SelectRandomInstance.InstanceId }}"
+    DesiredState:  terminated
+- name: forceStopInstances
+  action: aws:changeInstanceState
+  inputs:
+    InstanceIds: 
+      - "{{ SelectRandomInstance.InstanceId }}"
+    CheckStateOnly: false
+    DesiredState: terminated
+    Force: true
+- name: verifyInstanceStateTerminated
+  action: aws:waitForAwsResourceProperty
+  timeoutSeconds: 90
+  inputs:
+    Service: ec2
+    Api: DescribeInstanceStatus
+    IncludeAllInstances: true
+    InstanceIds: 
+      - "{{ SelectRandomInstance.InstanceId }}"
+    PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
+    DesiredValues:
+      - terminated
+outputs:
+- "SelectRandomInstance.InstanceId"
+
+
