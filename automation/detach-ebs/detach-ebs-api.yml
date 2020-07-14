@@ -1,0 +1,73 @@
+---
+description: Detach the volume only if the ec2 instance has the specified tags (describe-instances api)
+schemaVersion: '0.3'
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  VolumeId:
+    type: String
+    description: "The Ebs volume Id to detach (Required) "
+  TagName:
+    type: String
+    description: "The tag name to filter instances"
+  TagValue:
+    type: String
+    description: "The tag value to filter instances"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform
+      the actions on your behalf."
+mainSteps:
+- name: listInstances
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  onFailure: Abort
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    Filters:
+    -  Name: block-device-mapping.volume-id
+       Values: ["{{ VolumeId }}"]
+    -  Name: tag:{{ TagName }}
+       Values: ["{{ TagValue }}"]
+  outputs:
+    - Name: InstanceId
+      Selector: "$.Reservations[0].Instances[0].InstanceId"
+      Type: String
+- name: detachEbsVolume
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  onFailure: Abort
+  inputs:
+    Service: ec2
+    Api: DetachVolume
+    VolumeId: "{{ VolumeId }}"
+    InstanceId: "{{ listInstances.InstanceId }}"
+  outputs:
+    - Name: EbsState
+      Selector: "$.State"
+      Type: String
+- name: verifyRootVolumeDetached
+  action: aws:waitForAwsResourceProperty
+  timeoutSeconds: 30
+  inputs:
+    Service: ec2
+    Api: DescribeVolumes
+    VolumeIds:
+    - "{{ VolumeId }}"
+    PropertySelector: "$.Volumes[0].State"
+    DesiredValues:
+    - "available"
+- name: createTags
+  action: aws:createTags
+  maxAttempts: 2
+  timeoutSeconds: 60
+  onFailure: Abort
+  inputs:
+    ResourceType: EC2
+    ResourceIds:
+    - "{{ VolumeId }}"
+    Tags:
+    - Key: chaosAction
+      Value: Detachedfrom"{{ listInstances.InstanceId }}"
+outputs:
+- "listInstances.InstanceId"

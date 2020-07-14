@@ -1,0 +1,132 @@
+---
+description: Select random EC2 instance in AZ, tag its ebs root volume, stop the instance, and detach the root volume
+schemaVersion: '0.3'
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  AvailabilityZone:
+    type: String
+    description: "The Availability Zone to impact (Required) "
+  TagName:
+    type: String
+    description: "The tag name to filter instances"
+  TagValue:
+    type: String
+    description: "The tag value to filter instances"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform
+      the actions on your behalf."
+mainSteps:
+- name: listInstances
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  onFailure: Abort
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    Filters:
+    -  Name: availability-zone
+       Values: ["{{ AvailabilityZone }}"]
+    -  Name: instance-state-name
+       Values: ["running"]
+    -  Name: tag:{{ TagName }}
+       Values: ["{{ TagValue }}"]
+  outputs:
+    - Name: InstanceIds
+      Selector: "$.Reservations..Instances..InstanceId"
+      Type: StringList
+- name: SeletRandomInstance
+  action: aws:executeScript
+  timeoutSeconds: 60
+  maxAttempts: 1
+  onFailure: Abort
+  inputs:
+    Runtime: python3.6
+    Handler: getRandomInstance
+    InputPayload:
+      InstanceIds:
+        - "{{ listInstances.InstanceIds }}"
+    Script: |-
+      def getRandomInstance(events, context):
+         import random
+         InstanceId = random.choice(events['InstanceIds'])
+         return { 'InstanceId' : InstanceId }
+  outputs:
+    - Name: InstanceId
+      Selector: $.Payload.InstanceId
+      Type: String
+- name: describeInstance
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  maxAttempts: 1
+  onFailure: Abort
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    InstanceIds: 
+      - "{{ SeletRandomInstance.InstanceId }}"
+    Filters:
+      -  Name: instance-state-name
+         Values: ["running"]
+      -  Name: tag:{{ TagName }}
+         Values: ["{{ TagValue }}"]
+  outputs:
+    - Name: EbsId
+      Selector: "$.Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId"
+      Type: String
+- name: createTags
+  action: aws:createTags
+  maxAttempts: 2
+  timeoutSeconds: 60
+  onFailure: Abort
+  inputs:
+    ResourceType: EC2
+    ResourceIds:
+    - "{{ describeInstance.EbsId }}"
+    Tags:
+    - Key: chaosAction
+      Value: Detachedfrom"{{ SeletRandomInstance.InstanceId }}"
+- name: stopInstances
+  action: aws:changeInstanceState
+  timeoutSeconds: 60
+  onFailure: Continue
+  inputs:
+    InstanceIds: 
+      - "{{ SeletRandomInstance.InstanceId }}"
+    DesiredState: stopped
+- name: forceStopInstances
+  action: aws:changeInstanceState
+  timeoutSeconds: 60
+  inputs:
+    InstanceIds: 
+      - "{{ SeletRandomInstance.InstanceId }}"
+    CheckStateOnly: false
+    DesiredState: stopped
+    Force: true
+- name: detachEbsVolume
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  onFailure: Abort
+  inputs:
+    Service: ec2
+    Api: DetachVolume
+    VolumeId: "{{ describeInstance.EbsId }}"
+    InstanceId: "{{ SeletRandomInstance.InstanceId }}"
+  outputs:
+    - Name: EbsState
+      Selector: "$.State"
+      Type: String
+- name: verifyRootVolumeDetached
+  action: aws:waitForAwsResourceProperty
+  timeoutSeconds: 30
+  inputs:
+    Service: ec2
+    Api: DescribeVolumes
+    VolumeIds:
+    - "{{ describeInstance.EbsId }}"
+    PropertySelector: "$.Volumes[0].State"
+    DesiredValues:
+    - "available"
+outputs:
+- "describeInstance.EbsId"
+- "SeletRandomInstance.InstanceId"
