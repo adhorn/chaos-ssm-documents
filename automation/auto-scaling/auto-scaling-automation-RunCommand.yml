@@ -44,7 +44,6 @@ mainSteps:
         duration: "{{ duration }}"
   - name: verifyInstanceStateRunningAfter
     action: aws:waitForAwsResourceProperty
-    # timeout is strongly encouraged for action
     timeoutSeconds: 60
     inputs:
       Service: ec2
