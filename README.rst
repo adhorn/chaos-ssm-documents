@@ -1,5 +1,5 @@
 
-Chaos Injection for AWS resources using Amazon Run Command and Automation
+Chaos Injection for AWS resources using Amazon SSM Run Command and Automation
 =========================================================================
 
 |issues| |maintenance| |twitter| 
