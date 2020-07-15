@@ -1,0 +1,16 @@
+---
+schemaVersion: '2.2'
+description: File disk space on an instance
+parameters:
+  duration:
+    type: String
+    description: (Required) The duration - in seconds - of the attack. It takes a long time to create the file.
+    default: "600"
+mainSteps:
+- action: aws:runShellScript
+  name: ChaosFillDiskAttack
+  inputs:
+    runCommand:
+    - nohup dd if=/dev/urandom of=/burn bs=1M count=65536 iflag=fullblock
+    - sleep {{ duration }}
+    - rm -f /burn
