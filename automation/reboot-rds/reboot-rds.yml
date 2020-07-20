@@ -1,0 +1,101 @@
+---
+description: Reboot a given RDS Instance if it has the propers tags
+schemaVersion: "0.3"
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  InstanceId:
+    type: String
+    description: (Required) Identifies the *RDS* instance subject to action.
+  TagName:
+    type: String
+    description: "The tag name to filter instances"
+  TagValue:
+    type: String
+    description: "The tag value to filter instances"
+  AutomationAssumeRole:
+    type: String
+    description: (Required) The ARN of the role that allows Automation to perform the actions on your behalf.
+mainSteps:
+# get ARN of the RDS instance (by ID)
+- name: getRdsArn
+  action: aws:executeAwsApi
+  timeoutSeconds: 60
+  inputs:
+    Service: rds
+    Api: DescribeDBInstances
+    DBInstanceIdentifier: "{{InstanceId}}"
+  outputs:
+    - Name: RDSInstanceArn
+      Selector: "$.DBInstances[0].DBInstanceArn"
+      Type: String
+
+- name: GetRdsTags
+  action: aws:executeScript
+  inputs:
+    Runtime: python3.6
+    Handler: getTagsForResource
+    InputPayload:
+      ResourceName: "{{ getRdsArn.RDSInstanceArn }}"
+      TagName: "{{ TagName }}"
+      TagValue: "{{ TagValue }}"
+    Script: |-
+      def getTagsForResource(events, context):
+          import boto3
+          tag_name = events['TagName']
+          tag_value = events['TagValue']
+          to_find = dict([('Key', tag_name), ('Value', tag_value)])
+          rds = boto3.client('rds')
+          tags = rds.list_tags_for_resource(
+            ResourceName= events['ResourceName']
+          )
+          tag_list = tags['TagList']
+          if to_find in tag_list:
+            return True
+          else:
+            return False
+  outputs:
+    - Name: AssertTag
+      Selector: $.Payload
+      Type: Boolean
+
+- name: continueIfTags
+  action: aws:branch
+  onFailure: Abort
+  inputs:
+    Choices:
+    - NextStep: AssertNotRebooting
+      Variable: "{{ GetRdsTags.AssertTag }}"
+      BooleanEquals: True
+  isEnd: true
+
+- name: AssertNotRebooting
+  action: aws:assertAwsResourceProperty
+  isCritical: true
+  onFailure: Abort
+  nextStep: RebootInstance
+  inputs:
+    Service: rds
+    Api: DescribeDBInstances
+    DBInstanceIdentifier: "{{InstanceId}}"
+    PropertySelector: "$.DBInstances[0].DBInstanceStatus"
+    DesiredValues: ["available"]
+
+- name: RebootInstance
+  action: aws:executeAwsApi
+  inputs:
+    Service: rds
+    Api: RebootDBInstance
+    DBInstanceIdentifier: "{{InstanceId}}"
+
+- name: WaitForAvailableState
+  action: aws:waitForAwsResourceProperty
+  maxAttempts: 10
+  timeoutSeconds: 600
+  onFailure: Abort
+  inputs:
+      Service: rds
+      Api: DescribeDBInstances
+      DBInstanceIdentifier: "{{InstanceId}}"
+      PropertySelector: "$.DBInstances[0].DBInstanceStatus"
+      DesiredValues: ["available"]
+  isEnd: true
