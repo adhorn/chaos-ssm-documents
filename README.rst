@@ -27,10 +27,12 @@ SSM Automation documents:
 -------------------------
 To use SSM Automation, check `the link <https://medium.com/@adhorn/creating-your-own-chaos-monkey-with-aws-systems-manager-automation-6ad2b06acf205>`_
 
-* Support for randomly stopping EC2 instances via API
-* Support for randomly stopping EC2 instances via AWS Lambda
-* Support for CPU stress scenario via Run Command
+* Support for (randomly) stopping EC2 instances via API
+* Support for (randomly) stopping EC2 instances via AWS Lambda
+* Support for (randomly) terminating EC2 instances via API
 * Support for detaching EBS volumes from EC2 instances via API (ec2, ebs)
+* Support for rebooting RDS instance with proper tags via API
+* Support for CPU stress scenario via Run Command
 
 
 Upload an SSM Automation document:
