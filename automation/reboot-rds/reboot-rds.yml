@@ -44,7 +44,7 @@ mainSteps:
           tag_name = events['TagName']
           tag_value = events['TagValue']
           to_find = dict([('Key', tag_name), ('Value', tag_value)])
-          rds = boto3.client('rds', region_name='eu-west-1')
+          rds = boto3.client('rds')
           tags = rds.list_tags_for_resource(
             ResourceName= events['ResourceName']
           )
@@ -70,7 +70,7 @@ mainSteps:
 
 - name: AssertNotRebooting
   action: aws:assertAwsResourceProperty
-  isCritical: false
+  isCritical: true
   onFailure: Abort
   nextStep: RebootInstance
   inputs:
