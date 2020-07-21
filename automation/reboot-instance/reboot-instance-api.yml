@@ -17,7 +17,20 @@ parameters:
     description: "(Optional) The ARN of the role that allows Automation to perform
       the actions on your behalf."
 mainSteps:
-- name: rebootInstances
+- name: AssertRunning
+  action: aws:assertAwsResourceProperty
+  isCritical: true
+  onFailure: Abort
+  nextStep: rebootInstance
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    InstanceIds: 
+     - "{{ InstanceId }}"
+    PropertySelector: "$.Reservations[0].Instances[0].State.Name"
+    DesiredValues:
+    - "running"
+- name: rebootInstance
   action: aws:executeAwsApi
   timeoutSeconds: 60
   inputs:
