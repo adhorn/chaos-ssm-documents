@@ -17,6 +17,19 @@ parameters:
     description: "(Optional) The ARN of the role that allows Automation to perform
       the actions on your behalf."
 mainSteps:
+- name: AssertRunning
+  action: aws:assertAwsResourceProperty
+  isCritical: true
+  onFailure: Abort
+  nextStep: terminateInstances
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    InstanceIds: 
+     - "{{ InstanceId }}"
+    PropertySelector: "$.Reservations[0].Instances[0].State.Name"
+    DesiredValues:
+    - "running"
 - name: terminateInstances
   action: aws:changeInstanceState
   onFailure: Continue
