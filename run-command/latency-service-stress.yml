@@ -7,6 +7,7 @@ parameters:
     description: Specify the service to add delay to - https://docs.aws.amazon.com/general/latest/gr/aws-ip-ranges.html. (Required)
     default: DYNAMODB
     allowedValues:
+    - AMAZON
     - DYNAMODB
     - S3
     - EC2

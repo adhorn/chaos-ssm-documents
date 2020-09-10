@@ -4,7 +4,7 @@ description: Blackhole a protocol/port on an instance
 parameters:
   protocol:
     type: String
-    description: Specify the protocol to blackhole. Options: tcp, udp (Required)
+    description: Specify the protocol to blackhole.
     allowedValues:
       - tcp
       - udp
