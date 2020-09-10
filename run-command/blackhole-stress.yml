@@ -13,15 +13,14 @@ parameters:
     description: Specify the port to blackhole. (Required)
   duration:
     type: String
-    description: The duration - in seconds - of the blackhole. (Required)
-    default: "60"
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosBlackholeAttack
   inputs:
     runCommand:
-    - iptables -A INPUT -p {{ protocol }} --dport {{ port }} -j DROP
-    - iptables -A OUTPUT -p {{ protocol }} --dport {{ port }} -j DROP
-    - sleep {{ duration }}
-    - iptables -D INPUT -p {{ protocol }} --dport {{ port }} -j DROP
-    - iptables -D OUTPUT -p {{ protocol }} --dport {{ port }} -j DROP
+    - "echo 'iptables -D INPUT -p {{ protocol }} --dport {{ port }} -j DROP' | at now + {{ duration }} minutes"
+    - "echo 'iptables -D OUTPUT -p {{ protocol }} --dport {{ port }} -j DROP' | at now + {{ duration }} minutes"
+    - "iptables -A INPUT -p {{ protocol }} --dport {{ port }} -j DROP"
+    - "iptables -A OUTPUT -p {{ protocol }} --dport {{ port }} -j DROP"

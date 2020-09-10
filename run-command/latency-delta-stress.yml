@@ -9,12 +9,12 @@ parameters:
   delay:
     type: String
     description: The delay to add to the interface in milliseconds.
-    default: "1000"
+    default: "100"
   delta:
     type: String
     description: The delta +- to add to the delay in milliseconds.
-    default: "500"
-  # Adds 1000ms +- 500ms of latency to each packet
+    default: "50"
+  # Adds 100ms +- 50ms of latency to each packet
   duration:
     type: String
     description: The duration - in minutes - of the attack. (Required)
@@ -24,5 +24,6 @@ mainSteps:
   name: ChaosLatencyDeltaAttack
   inputs:
     runCommand:
-    - echo "tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms" | at now + {{ duration }} minutes
-    - tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms
+    - "echo 'tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms' | at now + {{ duration }} minutes"
+    - "tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms {{ delta }}ms"
+    - "tc qdisc show"

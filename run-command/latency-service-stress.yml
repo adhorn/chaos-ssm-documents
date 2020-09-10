@@ -17,7 +17,7 @@ parameters:
   delay:
     type: String
     description: The delay to add to the interface in milliseconds.
-    default: "200"
+    default: "100"
   jitter:
     type: String
     description: The jitter to add to the delay in milliseconds.

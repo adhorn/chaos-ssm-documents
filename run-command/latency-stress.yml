@@ -19,5 +19,6 @@ mainSteps:
   name: ChaosLatencyAttack
   inputs:
     runCommand:
-    - echo "tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms" | at now + {{ duration }} minutes
-    - tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms
+    - "echo 'tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms' | at now + {{ duration }} minutes"
+    - "tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms"
+    - "tc qdisc show"

@@ -1,11 +1,11 @@
 ---
 schemaVersion: '2.2'
-description: Block access to RDS control plane on an instance 
+description: Block access to RDS control plane (SQL port) on an instance 
 parameters:
   duration:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
-    default: "60"
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
 mainSteps:
 - action: aws:runShellScript
   name: ChaosBlackholeRDSAttack
@@ -13,8 +13,7 @@ mainSteps:
     runCommand:
     # Block SQL port
     # make copy of /etc/hosts to /etc/host.back
-    - iptables -A INPUT -p tcp -m tcp --dport 3306 -j DROP
-    - iptables -A OUTPUT -p tcp -m tcp --dport 3306 -j DROP
-    - sleep {{ duration }}
-    - iptables -D OUTPUT -p tcp -m tcp --dport 3306 -j DROP
-    - iptables -D INPUT -p tcp -m tcp --dport 3306 -j DROP
+    - "echo 'iptables -D INPUT -p tcp -m tcp --dport 3306 -j DROP' | at now + {{ duration }} minutes"
+    - "echo 'iptables -D OUTPUT -p tcp -m tcp --dport 3306 -j DROP' | at now + {{ duration }} minutes"
+    - "iptables -A INPUT -p tcp -m tcp --dport 3306 -j DROP"
+    - "iptables -A OUTPUT -p tcp -m tcp --dport 3306 -j DROP"

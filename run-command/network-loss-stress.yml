@@ -25,5 +25,6 @@ mainSteps:
   name: ChaosPacketLossAttack
   inputs:
     runCommand:
-    - echo "tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%" | at now + {{ duration }} minutes
-    - tc qdisc add dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%
+    - "echo 'tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%' | at now + {{ duration }} minutes"
+    - "tc qdisc add dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%"
+    - "tc qdisc show"

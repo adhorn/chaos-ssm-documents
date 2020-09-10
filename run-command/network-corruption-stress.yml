@@ -20,5 +20,6 @@ mainSteps:
   name: ChaosNetCorruptAttack
   inputs:
     runCommand:
-    - echo "tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%" | at now + {{ duration }} minutes
-    - tc qdisc add dev {{ interface }} root netem corrupt {{ corrupt }}%
+    - "echo 'tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%' | at now + {{ duration }} minutes"
+    - "tc qdisc add dev {{ interface }} root netem corrupt {{ corrupt }}%"
+    - "tc qdisc show"

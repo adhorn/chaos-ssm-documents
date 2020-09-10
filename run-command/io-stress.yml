@@ -20,4 +20,4 @@ mainSteps:
   inputs:
     runCommand:
     # https://www.mankier.com/1/stress-ng#Examples
-    - stress-ng --iomix {{ iomix }} --iomix-bytes {{ percent }}% -t {{ duration }}s
+    - "stress-ng --iomix {{ iomix }} --iomix-bytes {{ percent }}% -t {{ duration }}s"
