@@ -47,6 +47,7 @@ SSM Run Command documents:
 --------------------------
 To use SSM Run Command, please check `this link <https://medium.com/@adhorn/injecting-chaos-to-amazon-ec2-using-amazon-system-manager-ca95ee7878f5>`_
 
+* Support for latency injection to a particular AWS service ``latency-service-stress.yml``
 * Support for latency injection using ``latency-stress.yml``
 * Support for latency with delta stress using ``latency-delta-stress.yml``
 * Support for CPU burn using ``spu-stress.yml``
