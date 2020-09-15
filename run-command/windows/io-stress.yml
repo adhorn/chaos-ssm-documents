@@ -1,0 +1,18 @@
+description: >-
+  # IO Stress
+
+  Overloading IO
+
+schemaVersion: "2.2"
+parameters:
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+mainSteps:
+  - name: Act
+    action: "aws:runPowerShellScript"
+    inputs:
+      runCommand:
+        - |
+          
