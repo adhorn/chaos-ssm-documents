@@ -1,6 +1,6 @@
 ---
-schemaVersion: '2.2'
 description: Run a memory stress on an instance
+schemaVersion: '2.2'
 parameters:
   duration:
     type: String
@@ -16,7 +16,7 @@ parameters:
     default: "80"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosMemoryAttack
+  name: ExecuteStressNg
   inputs:
     runCommand:
     # https://www.mankier.com/1/stress-ng#Examples

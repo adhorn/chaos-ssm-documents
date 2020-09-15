@@ -1,6 +1,6 @@
 ---
-schemaVersion: '2.2'
 description: Block access to EC2 control plane on an instance 
+schemaVersion: '2.2'
 parameters:
   duration:
     type: String
@@ -8,14 +8,17 @@ parameters:
     default: "1"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosBlackholeEC2Attack
+  name: RevertCommandScheduling
   inputs:
     runCommand:
-    # Block some Amazon EC2 API endpoints, add yours :)
-    # make copy of /etc/hosts to /etc/host.back
-    - "sudo cp /etc/hosts /etc/hosts.back"
     # copy back the old version  /etc/hosts
     - "echo 'sudo cp /etc/hosts.back /etc/hosts' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterHostsFile
+  inputs:
+    runCommand:
+    # make copy of /etc/hosts to /etc/host.back
+    - "sudo cp /etc/hosts /etc/hosts.back"
     - "echo '127.0.0.1 ec2.us-east-1.amazonaws.com' >> /etc/hosts"
     - "echo '127.0.0.1 ec2.us-east-2.amazonaws.com' >> /etc/hosts"
     - "echo '127.0.0.1 ec2.us-west-1.amazonaws.com' >> /etc/hosts"

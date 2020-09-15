@@ -8,12 +8,15 @@ parameters:
     default: "1"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosBlackholeRDSAttack
+  name: RevertCommandScheduling
+  inputs:
+    runCommand:
+    - "echo 'iptables -D INPUT -p tcp -m tcp --dport 3306 -j DROP' | at now + {{ duration }} minutes"
+    - "echo 'iptables -D OUTPUT -p tcp -m tcp --dport 3306 -j DROP' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterIPtables
   inputs:
     runCommand:
     # Block SQL port
-    # make copy of /etc/hosts to /etc/host.back
-    - "echo 'iptables -D INPUT -p tcp -m tcp --dport 3306 -j DROP' | at now + {{ duration }} minutes"
-    - "echo 'iptables -D OUTPUT -p tcp -m tcp --dport 3306 -j DROP' | at now + {{ duration }} minutes"
     - "iptables -A INPUT -p tcp -m tcp --dport 3306 -j DROP"
     - "iptables -A OUTPUT -p tcp -m tcp --dport 3306 -j DROP"

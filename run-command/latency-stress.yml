@@ -1,6 +1,6 @@
 ---
-schemaVersion: '2.2'
 description: Adding latency on the network (default eth0)
+schemaVersion: '2.2'
 parameters:
   interface:
     type: String
@@ -16,9 +16,13 @@ parameters:
     default: "1"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosLatencyAttack
+  name: RevertCommandScheduling
   inputs:
     runCommand:
     - "echo 'tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterNetworkInterface
+  inputs:
+    runCommand:
     - "tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms"
     - "tc qdisc show"
