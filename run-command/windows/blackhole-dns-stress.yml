@@ -10,7 +10,18 @@ parameters:
     description: The duration - in seconds - of the attack. (Required)
     default: "60"
 mainSteps:
-  - name: ALTERDNS
+  - name: RevertCommandScheduling
+      action: 'aws:runPowerShellScript'
+      inputs:
+        runCommand:
+          - |
+            $chaosRevertjob = {
+            	Start-Sleep -s {{duration}} 
+            	Remove-NetFirewallRule -DisplayName "CHAOS Block DNS IP address"
+            }
+            $refjob = Start-Job -ScriptBlock $chaosRevertjob
+          - 
+  - name: AlterDNS
     action: "aws:runPowerShellScript"
     inputs:
       runCommand:
@@ -18,7 +29,7 @@ mainSteps:
         $addresses = Get-DnsClientServerAddress -AddressFamily "IPv4" | select -ExpandProperty ServerAddresses 
         New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol UDP -Action Block -RemoteAddress $addresses
         New-NetFirewallRule -DisplayName "CHAOS Block DNS IP address" -Direction Outbound –LocalPort Any -Protocol TCP -Action Block -RemoteAddress $addresses
-  - name: runtestfail
+  - name: RunTestFail
     action: "aws:runPowerShellScript"
     inputs:
       runCommand:
@@ -27,13 +38,10 @@ mainSteps:
     action: 'aws:runPowerShellScript'
     inputs:
       runCommand:
-      - "Start-Sleep -s {{duration}}"         
-  - name: Revert
-    action: 'aws:runPowerShellScript'
-    inputs:
-      runCommand:
-      - Remove-NetFirewallRule -DisplayName "CHAOS Block DNS IP address"
-  - name: runtestpass
+      - |
+        do { Start-Sleep -Milliseconds 100 } until ($refjob.State -eq "Completed");
+        $refjob | Remove-Job
+  - name: RunTestPass
     action: "aws:runPowerShellScript"
     inputs:
       runCommand:
