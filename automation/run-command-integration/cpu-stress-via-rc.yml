@@ -9,7 +9,7 @@ parameters:
     default: ''
   InstanceIds:
     type: StringList
-    description: "(Required) EC2 Instance(s) to terminate"
+    description: "(Required) EC2 Instance(s) to target"
   duration:
     type: String
     description: The duration - in seconds - of the attack. (Required)
@@ -44,7 +44,6 @@ mainSteps:
         duration: "{{ duration }}"
   - name: verifyInstanceStateRunningAfter
     action: aws:waitForAwsResourceProperty
-    # timeout is strongly encouraged for action
     timeoutSeconds: 60
     inputs:
       Service: ec2

@@ -1,0 +1,61 @@
+---
+description: Reboot a given Instance if it has the propers tags
+schemaVersion: '0.3'
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  InstanceId:
+    type: String
+    description: "(Required) The Id of the instance to reboot"
+  TagName:
+    type: String
+    description: "The tag name to filter instances"
+  TagValue:
+    type: String
+    description: "The tag value to filter instances"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform
+      the actions on your behalf."
+mainSteps:
+- name: AssertRunning
+  action: aws:assertAwsResourceProperty
+  isCritical: true
+  onFailure: Abort
+  nextStep: terminateInstances
+  inputs:
+    Service: ec2
+    Api: DescribeInstances
+    InstanceIds: 
+     - "{{ InstanceId }}"
+    PropertySelector: "$.Reservations[0].Instances[0].State.Name"
+    DesiredValues:
+    - "running"
+- name: terminateInstances
+  action: aws:changeInstanceState
+  onFailure: Continue
+  inputs:
+    InstanceIds: 
+      - "{{ InstanceId }}"
+    DesiredState:  terminated
+- name: forceStopInstances
+  action: aws:changeInstanceState
+  inputs:
+    InstanceIds: 
+      - "{{ InstanceId }}"
+    CheckStateOnly: false
+    DesiredState: terminated
+    Force: true
+- name: verifyInstanceStateTerminated
+  action: aws:waitForAwsResourceProperty
+  timeoutSeconds: 90
+  inputs:
+    Service: ec2
+    Api: DescribeInstanceStatus
+    IncludeAllInstances: true
+    InstanceIds: 
+      - "{{ InstanceId }}"
+    PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
+    DesiredValues:
+      - terminated
+
+

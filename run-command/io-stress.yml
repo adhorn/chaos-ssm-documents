@@ -1,6 +1,6 @@
 ---
-schemaVersion: '2.2'
 description: Run a IO stress on an instance
+schemaVersion: '2.2'
 parameters:
   duration:
     type: String
@@ -16,8 +16,8 @@ parameters:
     default: "80"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosIOAttack
+  name: ExecuteStressNg
   inputs:
     runCommand:
     # https://www.mankier.com/1/stress-ng#Examples
-    - stress-ng --iomix {{ iomix }} --iomix-bytes {{ percent }}% -t {{ duration }}s
+    - "stress-ng --iomix {{ iomix }} --iomix-bytes {{ percent }}% -t {{ duration }}s"

@@ -1,6 +1,6 @@
 ---
-schemaVersion: '2.2'
 description: Corrupt the network traffic (default eth0)
+schemaVersion: '2.2'
 parameters:
   interface:
     type: String
@@ -17,8 +17,13 @@ parameters:
     default: "1"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosNetCorruptAttack
+  name: RevertCommandScheduling
   inputs:
     runCommand:
-    - echo "tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%" | at now + {{ duration }} minutes
-    - tc qdisc add dev {{ interface }} root netem corrupt {{ corrupt }}%
+    - "echo 'tc qdisc del dev {{ interface }} root netem corrupt {{ corrupt }}%' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterNetworkInterface
+  inputs:
+    runCommand:
+    - "tc qdisc add dev {{ interface }} root netem corrupt {{ corrupt }}%"
+    - "tc qdisc show"

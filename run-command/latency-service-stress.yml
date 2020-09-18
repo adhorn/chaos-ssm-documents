@@ -1,0 +1,46 @@
+---
+schemaVersion: '2.2'
+description: Adding latency on the network (default {{ interface }})
+parameters:
+  service:
+    type: String
+    description: Specify the service to add delay to - https://docs.aws.amazon.com/general/latest/gr/aws-ip-ranges.html. (Required)
+    default: DYNAMODB
+    allowedValues:
+    - AMAZON
+    - DYNAMODB
+    - S3
+    - EC2
+    - API_GATEWAY
+    - CLOUDFRONT
+    - ROUTE53
+  delay:
+    type: String
+    description: The delay to add to the interface in milliseconds.
+    default: "100"
+    
+  jitter:
+    type: String
+    description: The jitter to add to the delay in milliseconds.
+    default: "10"
+  duration:
+    type: String
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
+mainSteps:
+- action: aws:runShellScript
+  name: RevertCommandScheduling
+  inputs:
+    runCommand:
+    - "echo 'tc filter del dev eth0 prio 1' | at now + {{ duration }} minutes"
+    - "echo 'tc qdisc del dev eth0 parent 1:1 handle 10:' | at now + {{ duration }} minutes"
+    - "echo 'tc qdisc del dev eth0 root handle 1: prio' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterNetworkInterface
+  inputs:
+    runCommand:
+    - export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
+    - "tc qdisc add dev eth0 root handle 1: prio priomap 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    - "tc qdisc add dev eth0 parent 1:1 handle 10: netem delay {{ delay }}ms {{ jitter }}ms distribution normal"
+    - "for k in $(curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.region==env.REGION) | select(.service==\"{{ service }}\") | .ip_prefix'); do echo $k && tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 match ip dst $k match ip dport 443 0xffff flowid 1:1; done"
+    - "tc qdisc show"

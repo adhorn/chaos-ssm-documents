@@ -1,6 +1,6 @@
 ---
-schemaVersion: '2.2'
 description: Adding packet loss to the network (default eth0)
+schemaVersion: '2.2'
 parameters:
   interface:
     type: String
@@ -22,8 +22,13 @@ parameters:
     default: "1"
 mainSteps:
 - action: aws:runShellScript
-  name: ChaosPacketLossAttack
+  name: RevertCommandScheduling
   inputs:
     runCommand:
-    - echo "tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%" | at now + {{ duration }} minutes
-    - tc qdisc add dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%
+    - "echo 'tc qdisc del dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterNetworkInterface
+  inputs:
+    runCommand:
+    - "tc qdisc add dev {{ interface }} root netem loss {{ loss }}% {{ correlation }}%"
+    - "tc qdisc show"

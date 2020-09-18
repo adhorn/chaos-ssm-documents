@@ -1,0 +1,19 @@
+---
+description: File disk space on an instance
+schemaVersion: '2.2'
+parameters:
+  duration:
+    type: String
+    description: (Required) The duration - in seconds - of the attack. It takes a long time to create the file.
+    default: "600"
+mainSteps:
+- action: aws:runShellScript
+  name: RevertCommandScheduling
+  inputs:
+    runCommand:
+    - "echo 'rm -f /burn' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: FillDisk
+  inputs:
+    runCommand:
+    - nohup dd if=/dev/urandom of=/burn bs=1M count=65536 iflag=fullblock
