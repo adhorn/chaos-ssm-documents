@@ -7,6 +7,7 @@ journal.json
 *.log
 .serverless
 .info
+*.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
