@@ -7,7 +7,6 @@ journal.json
 *.log
 .serverless
 .info
-.idea/**
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -134,3 +133,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.idea/.idea.chaos-ssm-documents.dir/.idea/workspace.xml
