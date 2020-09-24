@@ -10,7 +10,7 @@ parameters:
     description: The duration - in seconds - of the attack. (Required)
     default: "60"
 mainSteps:
-  - name: RevertCommandScheduling
+  - name: Act
     action: 'aws:runPowerShellScript'
     inputs:
       runCommand:

@@ -10,21 +10,25 @@ parameters:
     description: The duration - in seconds - of the attack. (Required)
     default: "60"
 mainSteps:
-  - name: AlterFirewall
+  - name: Act
     action: "aws:runPowerShellScript"
     inputs:
       runCommand:
         - |
+          $chaosRevertjob = {
+            Start-Sleep -s {{duration}} 
+            Remove-NetFirewallRule -DisplayName "CHAOS Block RDS"
+          }
+
+          Write-Host "Schedule job to delete the DNS rules that will be added later"
+          $refjob = Start-Job -ScriptBlock $chaosRevertjob
+                   
           New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Outbound –LocalPort 3306 -Protocol TCP -Action Block | Out-Null
           New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Inbound –LocalPort 3306 -Protocol TCP -Action Block | Out-Null
           Write-Host "Blocked Port 3306 Outbound and Inbound"
-  - name: Pause
-    action: 'aws:runPowerShellScript'
-    inputs:
-      runCommand:
-        - "Start-Sleep -s {{duration}}"
-  - name: Revert
-    action: 'aws:runPowerShellScript'
-    inputs:
-      runCommand:
-        - Remove-NetFirewallRule -DisplayName "CHAOS Block RDS"
+
+          Write-Host "Wating until revert command scheduling job has complete"
+          do { Start-Sleep -Milliseconds 100 } until ($refjob.State -eq "Completed");
+          
+          Write-Host "Removing scheduled job"
+          $refjob | Remove-Job

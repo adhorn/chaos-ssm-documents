@@ -14,7 +14,7 @@ parameters:
     description: The regions you would like to block (Required)
     default: "us-east-1,us-west-1,eu-west-1,eu-west-2"
 mainSteps:
-  - name: RevertCommandScheduling
+  - name: Act
     action: "aws:runPowerShellScript"
     inputs:
       runCommand:
