@@ -18,3 +18,8 @@ To learn how to use these SSM Documents - please check `this link <https://mediu
 * Support for blackhole DynamoDB stress using ``blackhole-dynamo-stress.yml``
 * Support for blackhole EC2 stress using ``blackhole-ec2-stress.yml``
 * Support for blackhole DNS stress using ``blackhole-dns-stress.yml``
+
+**Prerequisites**
+
+* `SSM Agent <https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-ssm-agent.html>`_ (Preinstalled on several Amazon Machine Images)
+* `stress-ng <https://wiki.ubuntu.com/Kernel/Reference/stress-ng>`_ (Preinstalled on several Amazon Machine Images)

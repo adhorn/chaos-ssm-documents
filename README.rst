@@ -61,6 +61,11 @@ To use SSM Run Command, please check `this link <https://medium.com/@adhorn/inje
 * Support for blackhole EC2 stress using ``blackhole-ec2-stress.yml``
 * Support for blackhole DNS stress using ``blackhole-dns-stress.yml``
 
+**Prerequisites**
+
+* `SSM Agent <https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-ssm-agent.html>`_ (Preinstalled on several Amazon Machine Images)
+* `stress-ng <https://wiki.ubuntu.com/Kernel/Reference/stress-ng>`_ (Preinstalled on several Amazon Machine Images)
+
 
 Upload one document at a time
 -----------------------------
