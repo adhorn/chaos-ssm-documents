@@ -1,0 +1,40 @@
+description: >-
+  # Blackhole  Stress
+
+  Block port on a windows instance. 
+
+schemaVersion: "2.2"
+parameters:
+  duration:
+    type: String
+    description: The duration - in seconds - of the attack. (Required)
+    default: "60"
+  protocol:
+    type: String
+    description: Specify the protocol to blackhole. Options are TCP, UDP (Required)
+    allowedValues:
+      - TCP
+      - UDP
+  port:
+    type: String
+    description: Specify the port to blackhole. (Required)
+mainSteps:
+  - name: AlterFirewall
+    action: "aws:runPowerShellScript"
+    inputs:
+      runCommand:
+        - |
+          $chaosRevertjob = {
+            Start-Sleep -s {{duration}} 
+            Remove-NetFirewallRule -DisplayName "CHAOS Block Port"
+          }
+          
+          New-NetFirewallRule -DisplayName "CHAOS Block Port" -Direction Outbound –LocalPort {{port}} -Protocol {{protocol}} -Action Block | Out-Null
+          New-NetFirewallRule -DisplayName "CHAOS Block Port" -Direction Inbound –LocalPort {{port}}  -Protocol {{protocol}} -Action Block | Out-Null
+          Write-Host "Blocked Port {{port}} Outbound and Inbound on {{protocol}} protocol"
+          
+          Write-Host "Wating until revert command scheduling job has complete"
+          do { Start-Sleep -Milliseconds 100 } until ($refjob.State -eq "Completed");
+          
+          Write-Host "Removing scheduled job"
+          $refjob | Remove-Job
