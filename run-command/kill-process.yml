@@ -1,0 +1,14 @@
+---
+description: Kill a particular proces (by PID) in an instance (irrevesible)
+schemaVersion: '2.2'
+parameters:
+  process:
+    type: String
+    description: 'Specify the PID of the process to kill (irrevesible)'
+    default: "0"
+mainSteps:
+- action: aws:runShellScript
+  name: KillProcess
+  inputs:
+    runCommand:
+    - "kill -9 {{ process }}"
