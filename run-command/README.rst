@@ -18,6 +18,8 @@ To learn how to use these SSM Documents - please check `this link <https://mediu
 * Support for blackhole DynamoDB stress using ``blackhole-dynamo-stress.yml``
 * Support for blackhole EC2 stress using ``blackhole-ec2-stress.yml``
 * Support for blackhole DNS stress using ``blackhole-dns-stress.yml``
+* Support for killing a process by PID using ``kill-process.yml``
+* Support for killing a process by name using ``kill-process-name.yml``
 
 **Prerequisites**
 
