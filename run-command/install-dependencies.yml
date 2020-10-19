@@ -1,0 +1,11 @@
+---
+description: Install chaos dependencies on instance
+schemaVersion: '2.2'
+mainSteps:
+- action: aws:runShellScript
+  name: InstallDependencies
+  inputs:
+    runCommand:
+    - "sudo yum -y install stress-ng"
+    - "sudo yum -y install tc"
+    - "sudo yum -y install jq"
