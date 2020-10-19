@@ -64,7 +64,7 @@ To use SSM Run Command, please check `this link <https://medium.com/@adhorn/inje
 **Prerequisites**
 
 * `SSM Agent <https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-ssm-agent.html>`_ (Preinstalled on several Amazon Machine Images)
-* `stress-ng <https://wiki.ubuntu.com/Kernel/Reference/stress-ng>`_ (Preinstalled on several Amazon Machine Images)
+* `stress-ng, tc, and jq <https://github.com/adhorn/chaos-ssm-documents/blob/master/run-command/install-dependencies.yml>`_ (Automatic install of dependencies)
 
 
 Upload one document at a time
