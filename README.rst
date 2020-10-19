@@ -25,7 +25,7 @@ in the `AWS Cloud <https://aws.amazon.com>`_.
 
 SSM Automation documents:
 -------------------------
-To use SSM Automation, check `the link <https://medium.com/@adhorn/creating-your-own-chaos-monkey-with-aws-systems-manager-automation-6ad2b06acf205>`_
+To use SSM Automation, check `the link <https://medium.com/@adhorn/creating-your-own-chaos-monkey-with-aws-systems-manager-automation-6ad2b06acf20>`_
 
 * Support for (randomly) stopping EC2 instances via API
 * Support for (randomly) stopping EC2 instances via AWS Lambda
@@ -40,7 +40,7 @@ Upload an SSM Automation document:
 
 .. code:: shell
     
-    aws ssm create-document --content --name "StopRandomInstances-API" file://stop_random_instance_api.yml --document-type "Automation" --document-format YAML
+    aws ssm create-document --name "StopRandomInstances-API" --content file://stop-random-instance-api.yml --document-type "Automation" --document-format YAML
 
 
 SSM Run Command documents:
