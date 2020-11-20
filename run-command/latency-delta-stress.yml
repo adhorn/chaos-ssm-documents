@@ -19,7 +19,36 @@ parameters:
     type: String
     description: The duration - in minutes - of the attack. (Required)
     default: "1"
+  InstallDependencies:
+    type: String
+    description: 'If set to True, Systems Manager installs the required dependencies on the target instances (Required)'
+    default: 'True'
+    allowedValues:
+    - 'True'
+    - 'False'
 mainSteps:
+- action: aws:runShellScript
+  name: InstallDependencies
+  inputs:
+    runCommand:
+    - "#!/bin/bash"
+    - if  [[ "{{InstallDependencies}}" == True ]] ; then
+    - '   echo "Installing required dependencies" >&2'
+    - '   if [ -f  "/etc/system-release" ] ; then'
+    - "     if cat /etc/system-release|grep -i 'Amazon Linux' ; then "
+    - "       sudo yum -y install tc "
+    - "     else"
+    - '       echo "There was a problem installing dependencies." >&2'
+    - "       exit 1"
+    - "     fi"
+    - "   elif cat /etc/issue|grep -i Ubuntu ; then "
+    - "     sudo apt-get update -y"
+    - "     sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tc"
+    - "   else"
+    - '     echo "There was a problem installing dependencies." >&2'
+    - "     exit 1"
+    - "   fi"
+    - fi
 - action: aws:runShellScript
   name: RevertCommandScheduling
   inputs:
