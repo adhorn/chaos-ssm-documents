@@ -43,16 +43,14 @@ mainSteps:
     - '   echo "Installing required dependencies" >&2'
     - '   if [ -f  "/etc/system-release" ] ; then'
     - "     if cat /etc/system-release|grep -i 'Amazon Linux' ; then "
-    - "       sudo yum -y install tc "
-    - "       sudo yum -y install jq"
+    - "       sudo yum -y install tc jq"
     - "     else"
     - '       echo "There was a problem installing dependencies." >&2'
     - "       exit 1"
     - "     fi"
     - "   elif cat /etc/issue|grep -i Ubuntu ; then "
     - "     sudo apt-get update -y"
-    - "     sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tc"
-    - "     sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y jq"
+    - "     sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tc jq"
     - "   else"
     - '     echo "There was a problem installing dependencies." >&2'
     - "     exit 1"

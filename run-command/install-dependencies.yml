@@ -6,6 +6,4 @@ mainSteps:
   name: InstallDependencies
   inputs:
     runCommand:
-    - "sudo yum -y install stress-ng"
-    - "sudo yum -y install tc"
-    - "sudo yum -y install jq"
+    - "sudo yum -y install stress-ng tc jq htop"
