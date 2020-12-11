@@ -86,6 +86,18 @@ Upload all of the SSM Documents to the AWS region of your choice
 
     ./upload-document.sh -r eu-west-1 (or other region of your choice)
 
+Upload all of the SSM Documents using CloudFormation
+----------------------------------------------------
+
+.. code:: shell
+
+    cd chaos-ssm-documents/
+
+    run-command/create-cfn.sh run-command/ | tee cfn-chaos-ssm.yml
+
+    aws cloudformation create-stack --stack-name ChaosSsm --template-body file://cfn-chaos-ssm.yml
+
+Specify AWS region using AWS CLI --region argument.
 
 SOME WORDS OF CAUTION BEFORE YOU START BREAKING THINGS:
 -------------------------------------------------------
