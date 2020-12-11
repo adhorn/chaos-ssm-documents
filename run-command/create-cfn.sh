@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #
-# Create CloudFormation template with SSM Run Commands in the repository.
-# Reads YAML files from input path specified in first argument.
-# Command expects the input path contains SSM Run Command documents.
-# Outputs CloudFormation YAML template with all the SSM Run Commands.
+# Create CloudFormation template from SSM Run Command documents in directory.
+#
+#  - Reads YAML files from input path specified in first argument.
+#  - Command expects the input path contains SSM Run Command documents.
+#  - Outputs CloudFormation YAML template with all the SSM Run Commands.
 #
 # Usage:
 # $ run-command/create-cfn.sh run-command/ | tee cfn-chaos-ssm.yml
