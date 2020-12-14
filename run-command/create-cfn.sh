@@ -15,11 +15,15 @@
 #
 # Do not pipe CloudFormation template file to run-command/ directory to avoid an endless loop.
 
-set -e
-
 [ -d "$1" ] || (echo "$0: usage: $0 /path/to/run-command/" >&2 && exit 1)
 
+head=$(git rev-parse HEAD)
+
+set -e
+
 cat <<EOF
+# https://github.com/adhorn/chaos-ssm-documents
+# $head
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: |
