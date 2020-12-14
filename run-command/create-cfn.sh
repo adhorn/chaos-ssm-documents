@@ -34,6 +34,7 @@ for document in "$1"/*.yml ; do
   $resource:
     Type: AWS::SSM::Document
     Properties:
+      Name: !Sub \${AWS::StackName}-$resource
       DocumentType: Command
       Content:
 EOF
