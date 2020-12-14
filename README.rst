@@ -99,6 +99,9 @@ Upload all of the SSM Documents using CloudFormation
 
 Specify AWS region using AWS CLI --region argument.
 
+Once deployed, the stack cannot be updated.
+Remove existing stack and re-deploy to apply changes.
+
 SOME WORDS OF CAUTION BEFORE YOU START BREAKING THINGS:
 -------------------------------------------------------
 
