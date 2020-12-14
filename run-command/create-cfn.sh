@@ -27,7 +27,7 @@ EOF
 
 for document in "$1"/*.yml ; do
     file=$(basename "$document")
-    resource=$(echo "$file" | sed -r 's/(^|-)([a-z])/\U\2/g' | cut -f1 -d.)
+    resource=$(echo "$file" | cut -f1 -d. | perl -pe 's/([a-z0-9]+)|./\u$1/g')
     cat <<EOF
 
   # $file
