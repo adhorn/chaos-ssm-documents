@@ -10,6 +10,9 @@
 # $ run-command/create-cfn.sh run-command/ | tee cfn-chaos-ssm.yml
 # $ aws cloudformation create-stack --stack-name ChaosSsm --template-body file://cfn-chaos-ssm.yml
 #
+# Resulting stack cannot be updated by using aws cloudformation update-stack
+# To update, first delete existing stack and then re-create it as above.
+#
 # Do not pipe CloudFormation template file to run-command/ directory to avoid an endless loop.
 
 set -e
