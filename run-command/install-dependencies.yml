@@ -6,4 +6,5 @@ mainSteps:
   name: InstallDependencies
   inputs:
     runCommand:
+    - "sudo amazon-linux-extras install testing"
     - "sudo yum -y install stress-ng tc jq htop"
