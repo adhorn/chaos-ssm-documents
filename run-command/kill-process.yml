@@ -1,14 +1,43 @@
 ---
-description: Kill a particular proces (by PID) in an instance (irrevesible)
+description: |
+  ## What does this document do?
+  It kills a particular process by name in an instance, using the `killall` command.
+
+  ## Input Parameters
+  * Process: (Required) Name of the process to kill.
+  * Signal: The SIGNAL to be sent along with the kill command (default: SIGTERM). The allowed values are:
+    * SIGTERM: Signal used for gracefully terminate a process. Can be referred as soft kill, because the receiver may choose to ignore it.
+    * SIGKILL: Signal used for immediate termination of a process. Cannot be caught, ignored or blocked. Child processes are killed as well.
+
+  ## Output Parameters
+  None.
+
 schemaVersion: '2.2'
 parameters:
-  process:
+  Process:
     type: String
-    description: 'Specify the PID of the process to kill (irrevesible)'
-    default: "0"
+    description: "(Required) Name of the process to kill, using the `killall` command. "
+    allowedPattern: '^[0-9a-zA-Z.\-=_]{1,128}$'
+  Signal:
+    type: String
+    description: |
+      The SIGNAL to be sent along with the kill command (default: SIGTERM).
+      The allowed values are:
+      * SIGTERM: Signal used for graceful process termination. Can be referred as soft kill, because the receiver may choose to ignore it.
+      * SIGKILL: Signal used for immediate process termination. Cannot be caught, ignored or blocked. Child processes are killed as well.
+    default: "SIGTERM"
+    allowedValues:
+      - 'SIGTERM'
+      - 'SIGKILL'
 mainSteps:
-- action: aws:runShellScript
-  name: KillProcess
-  inputs:
-    runCommand:
-    - "kill -9 {{ process }}"
+  - action: aws:runShellScript
+    name: KillProcess
+    description: |
+      ## Parameters: Process
+      This step will kill the specified process, using the `killall` command.
+    inputs:
+      maxAttempts: 1
+      timeoutSeconds: 10
+      runCommand:
+        - |
+          killall -{{ Signal }} "{{ Process }}"

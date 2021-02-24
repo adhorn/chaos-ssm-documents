@@ -1,53 +1,80 @@
 ---
-description: Run a IO stress on an instance
+description: |
+  ## What does this document do?
+  It runs IO stress on an instance via stress-ng tool.
+
+  ## Input Parameters
+  * Duration: (Required) The duration - in seconds - of the CPU stress.
+  * CPU: Specify the number of CPU stressors to use (default 0 = all)
+  * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default True)
+
+  ## Output Parameters
+  None.
+
 schemaVersion: '2.2'
 parameters:
-  duration:
+  Duration:
     type: String
-    description: The duration - in seconds - of the attack. (Required)
-    default: "60"
-  iomix:
+    description: "(Required) The duration - in seconds - of the IO stress."
+    allowedPattern: "^[0-9]+$"
+  Iomix:
     type: String
     description: 'Specify the number of mixed IO stressors to use (default 1)'
     default: "1"
-  percent:
+    allowedPattern: "^[0-9]+$"
+  Percent:
     type: String
-    description: 'Specify the percentage the % of the available file system space used by each stressor. (default 80)'
+    description: 'Specify the percentage of the available file system space used by each stressor. (default 80)'
     default: "80"
+    allowedPattern: "^[0-9]+$"
   InstallDependencies:
     type: String
-    description: 'If set to True, Systems Manager installs the required dependencies on the target instances (Required)'
+    description: 'If set to True, Systems Manager installs the required dependencies on the target instances (default: True)'
     default: 'True'
     allowedValues:
-    - 'True'
-    - 'False'
+      - 'True'
+      - 'False'
 mainSteps:
-- action: aws:runShellScript
-  name: InstallDependencies
-  inputs:
-    runCommand:
-    - "#!/bin/bash"
-    - if  [[ "{{InstallDependencies}}" == True ]] ; then
-    - '   echo "Installing required dependencies" >&2'
-    - '   if [ -f  "/etc/system-release" ] ; then'
-    - "     if cat /etc/system-release|grep -i 'Amazon Linux' ; then "
-    - "       sudo amazon-linux-extras install testing"
-    - "       sudo yum -y install stress-ng htop"
-    - "     else"
-    - '       echo "There was a problem installing dependencies." >&2'
-    - "       exit 1"
-    - "     fi"
-    - "   elif cat /etc/issue|grep -i Ubuntu ; then "
-    - "     sudo apt-get update -y"
-    - "     sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y stress-ng htop"
-    - "   else"
-    - '     echo "There was a problem installing dependencies." >&2'
-    - "     exit 1"
-    - "   fi"
-    - fi
-- action: aws:runShellScript
-  name: ExecuteStressNg
-  inputs:
-    runCommand:
-    # https://www.mankier.com/1/stress-ng#Examples
-    - "stress-ng --iomix {{ iomix }} --iomix-bytes {{ percent }}% -t {{ duration }}s"
+  - action: aws:runShellScript
+    name: InstallDependencies
+    description: |
+      ## Parameter: InstallDependencies
+      If set to True, this step installs the required dependency via operating system's repository. It supports both
+      Debian (apt) and CentOS (yum) based package managers.
+    inputs:
+      runCommand:
+        - |
+          #!/bin/bash
+          if  [[ "{{ InstallDependencies }}" == True ]] ; then
+            echo "Installing required dependencies"
+            if [ -f  "/etc/system-release" ] ; then
+              if cat /etc/system-release | grep -i 'Amazon Linux' ; then
+                sudo amazon-linux-extras install testing
+                sudo yum -y install stress-ng
+              else
+                echo "There was a problem installing dependencies."
+                exit 1
+              fi
+            elif cat /etc/issue | grep -i Ubuntu ; then
+              sudo apt-get update -y
+              sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y stress-ng
+            else
+              echo "There was a problem installing dependencies."
+              exit 1
+            fi
+          fi
+  - action: aws:runShellScript
+    name: ExecuteStressNg
+    description: |
+      ## Parameters: Duration, Iomix, and Percent
+      This step will perform an IO stress for the specified Duration time
+      in seconds.
+    inputs:
+      maxAttempts: 1
+      runCommand:
+        - |
+          if [ {{ Duration }} -lt 1 ] || [ {{ Duration }} -gt 43200 ] ; then echo Duration parameter value must be between 1 and 43200 seconds && exit; fi
+          pgrep stress-ng && echo Another stress-ng command is running, exiting... && exit
+          echo Initiating IO stress for {{ Duration }} seconds...
+          stress-ng --iomix {{ Iomix }} --iomix-bytes {{ Percent }}% -t {{ duration }}s
+          echo Finished IO stress.
