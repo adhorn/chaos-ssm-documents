@@ -37,6 +37,10 @@ parameters:
       - 'False'
 mainSteps:
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: InstallDependencies
     description: |
       ## Parameter: InstallDependencies
@@ -65,6 +69,10 @@ mainSteps:
             fi
           fi
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: ExecuteStressNg
     description: |
       ## Parameters: Duration, Workers and Percent

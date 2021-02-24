@@ -31,6 +31,10 @@ parameters:
       - 'False'
 mainSteps:
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: InstallDependencies
     description: |
       ## Parameter: InstallDependencies
@@ -41,6 +45,7 @@ mainSteps:
         - |
           #!/bin/bash
           if  [[ "{{ InstallDependencies }}" == True ]] ; then
+            if [[ "$( which stress-ng 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
             echo "Installing required dependencies"
             if [ -f  "/etc/system-release" ] ; then
               if cat /etc/system-release | grep -i 'Amazon Linux' ; then
@@ -59,6 +64,10 @@ mainSteps:
             fi
           fi
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: ExecuteStressNg
     description: |
       ## Parameters: Duration and CPU

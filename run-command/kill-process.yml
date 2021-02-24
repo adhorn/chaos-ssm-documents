@@ -31,6 +31,10 @@ parameters:
       - 'SIGKILL'
 mainSteps:
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: KillProcess
     description: |
       ## Parameters: Process

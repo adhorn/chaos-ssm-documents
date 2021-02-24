@@ -38,6 +38,10 @@ parameters:
       - 'False'
 mainSteps:
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: InstallDependencies
     description: |
       ## Parameter: InstallDependencies
@@ -48,6 +52,7 @@ mainSteps:
         - |
           #!/bin/bash
           if  [[ "{{ InstallDependencies }}" == True ]] ; then
+            if [[ "$( which tc 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
             echo "Installing required dependencies"
             if [ -f  "/etc/system-release" ] ; then
               if cat /etc/system-release | grep -i 'Amazon Linux' ; then
@@ -59,13 +64,17 @@ mainSteps:
               fi
             elif cat /etc/issue | grep -i Ubuntu ; then
               sudo apt-get update -y
-              sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tc
+              sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y iproute2
             else
               echo "There was a problem installing dependencies."
               exit 1
             fi
           fi
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: AlterNetworkInterface
     description: |
       ## Parameters: Interface, Delay and Duration
@@ -79,6 +88,7 @@ mainSteps:
       maxAttempts: 1
       runCommand:
         - |
+          #!/bin/bash
           MAX_FLAG_AGE_SECONDS=5
           ATTEMPT_ROLLBACK_AT_SECONDS=10
           STOP_TIME=$(( $(date +%s) + {{ Duration }} ))
@@ -89,19 +99,19 @@ mainSteps:
           ROLLBACK_CHECK='if [[ ( ! -f "'$FLAG_PATH'" ) || "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ]]; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
 
           # this will enqueue a rollback check, after $ATTEMPT_ROLLBACK_AT_SECONDS seconds
-          function schedule_rollback_attempt {
+          schedule_rollback_attempt() {
             echo "sleep $ATTEMPT_ROLLBACK_AT_SECONDS; $ROLLBACK_CHECK" | at now
           }
 
           # this will delete the flag file, and rollback the latency injection
-          function rollback {
+          rollback() {
             rm $FLAG_PATH
             $ROLLBACK_COMMAND
             exit $?
           }
 
           # this will inject some latency on the network
-          function inject_latency {
+          inject_latency() {
             echo "Injecting latency..."
             tc qdisc add dev {{ Interface }} root netem delay {{ Delay }}ms
           }
