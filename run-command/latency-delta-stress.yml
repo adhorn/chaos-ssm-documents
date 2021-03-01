@@ -2,16 +2,12 @@
 description: |
   ## What does this document do?
   It adds latency with delta +- on the network.
-
   ## Input Parameters
   * Interface: The interface to add delay to (default: eth0).
   * Delay: The delay - in milliseconds - to add to the interface (default: 100).
   * Delta: The delta - in milliseconds - to add to the delay (default: 50).
   * Duration: The duration - in seconds - of the test (default: 60).
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default: True).
-
-  ## Output Parameters
-  None.
 
 schemaVersion: '2.2'
 parameters:

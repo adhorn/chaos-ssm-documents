@@ -2,15 +2,11 @@
 description: |
   ## What does this document do?
   It kills a particular process by name in an instance, using the `killall` command.
-
   ## Input Parameters
   * Process: (Required) Name of the process to kill.
   * Signal: The SIGNAL to be sent along with the kill command (default: SIGTERM). The allowed values are:
     * SIGTERM: Signal used for gracefully terminate a process. Can be referred as soft kill, because the receiver may choose to ignore it.
     * SIGKILL: Signal used for immediate termination of a process. Cannot be caught, ignored or blocked. Child processes are killed as well.
-
-  ## Output Parameters
-  None.
 
 schemaVersion: '2.2'
 parameters:

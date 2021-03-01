@@ -2,15 +2,11 @@
 description: |
   ## What does this document do?
   It runs memory stress on an instance via stress-ng tool.
-
   ## Input Parameters
   * Duration: The duration - in seconds - of the memory stress (default: 60).
   * Workers: The number of virtual memory stressors (default: 1).
-  * Percent: The percentage of virtual memory to use (required).
+  * Percent: The percentage of virtual memory to use (default: 80).
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default: True).
-
-  ## Output Parameters
-  None.
 
 schemaVersion: '2.2'
 parameters:
@@ -28,6 +24,7 @@ parameters:
     type: String
     description: "The percentage of virtual memory to use (required)."
     allowedPattern: "^[0-9]+$"
+    default: "80"
   InstallDependencies:
     type: String
     description: "If set to True, Systems Manager installs the required dependencies on the target instances. (default: True)."
@@ -51,6 +48,7 @@ mainSteps:
         - |
           #!/bin/bash
           if  [[ "{{ InstallDependencies }}" == True ]] ; then
+            if [[ "$( which stress-ng 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
             echo "Installing required dependencies"
             if [ -f  "/etc/system-release" ] ; then
               if cat /etc/system-release | grep -i 'Amazon Linux' ; then

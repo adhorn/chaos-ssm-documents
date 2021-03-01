@@ -3,15 +3,11 @@ description: |
   ## What does this document do?
   It runs disk filling stress on an instance via stress-ng tool.
   stress-ng --fallocate {{ Workers }} --fallocate-bytes {{ Filesize }} -t {{ Duration }}s
-
   ## Input Parameters
   * Duration: (Required) The duration - in seconds - of the Disk stress.
   * Workers: Specify the number of workers continually fallocating (preallocating file space).
   * Filesize: Allocated  file  size in GB (default  is 1).
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default True)
-
-  ## Output Parameters
-  None.
 
 schemaVersion: '2.2'
 parameters:
@@ -19,6 +15,7 @@ parameters:
     type: String
     description: '(Required) The duration - in seconds - of the Disk stress.'
     allowedPattern: "^[0-9]+$"
+    default: "60"
   Workers:
     type: String
     description: 'Specify the number of Fallocate workers to use (default: 4)'

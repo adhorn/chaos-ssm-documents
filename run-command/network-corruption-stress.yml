@@ -2,15 +2,11 @@
 description: |
   ## What does this document do?
   It adds corruption on the network.
-
   ## Input Parameters
   * Interface: The interface to add corruption to (default: eth0).
   * Corruption: The percent of corruption to add to the network. (default: 5).
   * Duration: The duration - in seconds - of the test (default: 60).
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default: True).
-
-  ## Output Parameters
-  None.
 
 schemaVersion: '2.2'
 parameters:

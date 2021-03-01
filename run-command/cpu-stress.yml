@@ -2,14 +2,10 @@
 description: |
   ## What does this document do?
   It runs CPU stress on an instance via stress-ng tool.
-
   ## Input Parameters
   * Duration: (Required) The duration - in seconds - of the CPU stress.
   * CPU: Specify the number of CPU stressors to use (default 0 = all)
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default True)
-
-  ## Output Parameters
-  None.
 
 schemaVersion: '2.2'
 parameters:
@@ -17,6 +13,7 @@ parameters:
     type: String
     description: "(Required) The duration - in seconds - of the CPU stress."
     allowedPattern: "^[0-9]+$"
+    default: "60"
   CPU:
     type: String
     description: 'Specify the number of CPU stressors to use (default: 0 which means "all CPUs")'
