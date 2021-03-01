@@ -1,57 +1,133 @@
 ---
-description: Adding latency on the network (default eth0)
+description: |
+  ## What does this document do?
+  It adds latency on the network.
+  ## Input Parameters
+  * Interface: The interface to add delay to (default: eth0).
+  * Delay: The delay - in milliseconds - to add to the interface (default: 200).
+  * Duration: The duration - in seconds - of the test (default: 60).
+  * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default: True).
+
 schemaVersion: '2.2'
 parameters:
-  interface:
+  Interface:
     type: String
-    description: Specify the interface to add delay to. (Required)
-    default: eth0
-  delay:
+    description: "The interface to add delay to (default: eth0)."
+    default: "eth0"
+    allowedPattern: '^[0-9a-zA-Z\-]{1,15}$'
+  Delay:
     type: String
-    description: The delay to add to the interface in milliseconds.
-    default: "200"
-  duration:
+    description: "The delay - in milliseconds - to add to the interface (default: 100)."
+    default: "100"
+    allowedPattern: "^[0-9]+$"
+  Duration:
     type: String
-    description: The duration - in minutes - of the attack. (Required)
-    default: "1"
+    description: "The duration - in seconds - of the test (default: 60)."
+    default: "60"
+    allowedPattern: "^[0-9]+$"
   InstallDependencies:
     type: String
-    description: 'If set to True, Systems Manager installs the required dependencies on the target instances (Required)'
+    description: "If set to True, Systems Manager installs the required dependencies on the target instances. (default: True)."
     default: 'True'
     allowedValues:
-    - 'True'
-    - 'False'
+      - 'True'
+      - 'False'
 mainSteps:
-- action: aws:runShellScript
-  name: InstallDependencies
-  inputs:
-    runCommand:
-    - "#!/bin/bash"
-    - if  [[ "{{InstallDependencies}}" == True ]] ; then
-    - '   echo "Installing required dependencies" >&2'
-    - '   if [ -f  "/etc/system-release" ] ; then'
-    - "     if cat /etc/system-release|grep -i 'Amazon Linux' ; then "
-    - "       sudo yum -y install tc "
-    - "     else"
-    - '       echo "There was a problem installing dependencies." >&2'
-    - "       exit 1"
-    - "     fi"
-    - "   elif cat /etc/issue|grep -i Ubuntu ; then "
-    - "     sudo apt-get update -y"
-    - "     sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tc"
-    - "   else"
-    - '     echo "There was a problem installing dependencies." >&2'
-    - "     exit 1"
-    - "   fi"
-    - fi
-- action: aws:runShellScript
-  name: RevertCommandScheduling
-  inputs:
-    runCommand:
-    - "echo 'tc qdisc del dev {{ interface }} root netem delay {{ delay }}ms' | at now + {{ duration }} minutes"
-- action: aws:runShellScript
-  name: AlterNetworkInterface
-  inputs:
-    runCommand:
-    - "tc qdisc add dev {{ interface }} root netem delay {{ delay }}ms"
-    - "tc qdisc show"
+  - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
+    name: InstallDependencies
+    description: |
+      ## Parameter: InstallDependencies
+      If set to True, this step installs the required dependecy via operating system's repository. It supports both
+      Debian (apt) and CentOS (yum) based package managers.
+    inputs:
+      runCommand:
+        - |
+          #!/bin/bash
+          if  [[ "{{ InstallDependencies }}" == True ]] ; then
+            if [[ "$( which tc 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
+            echo "Installing required dependencies"
+            if [ -f  "/etc/system-release" ] ; then
+              if cat /etc/system-release | grep -i 'Amazon Linux' ; then
+                sudo amazon-linux-extras install testing
+                sudo yum -y install tc
+              else
+                echo "There was a problem installing dependencies."
+                exit 1
+              fi
+            elif cat /etc/issue | grep -i Ubuntu ; then
+              sudo apt-get update -y
+              sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y iproute2
+            else
+              echo "There was a problem installing dependencies."
+              exit 1
+            fi
+          fi
+  - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
+    name: AlterNetworkInterface
+    description: |
+      ## Parameters: Interface, Delay and Duration
+      This step adds a `Delay` (in milliseconds) to `Interface` for the given `Duration` (in seconds), using the `tc` (Traffic Control) command.
+      The script will inject latency on the network, and wait for the given duration to remove that. It has two rollback mechanisms in place:
+      * It will listen for exit signals (SIGINT and SIGTERM), and will stop the latency injection if any of them is received.
+      * It will periodically enqueue rollback checks into a queue (using `at` command). This way, if the command is stopped and the rollback
+      was not executed, the enqueued commands will try to stop it. (for example, if the command is stopped using kill -9). This is just
+      and extra safety check to avoid the latency to remain injected after the script is no longer running.
+    inputs:
+      maxAttempts: 1
+      runCommand:
+        - |
+          #!/bin/bash
+          MAX_FLAG_AGE_SECONDS=5
+          ATTEMPT_ROLLBACK_AT_SECONDS=10
+          STOP_TIME=$(( $(date +%s) + {{ Duration }} ))
+
+          RANDOM_STRING=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
+          FLAG_PATH="/tmp/AWSFIS-Run-Network-Latency-$RANDOM_STRING.flag"
+          ROLLBACK_COMMAND="tc qdisc del dev {{ Interface }} root netem delay {{ Delay }}ms"
+          ROLLBACK_CHECK='if test ! -f "'$FLAG_PATH'" || test "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
+
+          # this will enqueue a rollback check, after $ATTEMPT_ROLLBACK_AT_SECONDS seconds
+          schedule_rollback_attempt() {
+            echo "sleep $ATTEMPT_ROLLBACK_AT_SECONDS; $ROLLBACK_CHECK" | at now
+          }
+
+          # this will delete the flag file, and rollback the latency injection
+          rollback() {
+            rm $FLAG_PATH
+            $ROLLBACK_COMMAND
+            exit $?
+          }
+
+          # this will inject some latency on the network
+          inject_latency() {
+            echo "Injecting latency..."
+            tc qdisc add dev {{ Interface }} root netem delay {{ Delay }}ms
+          }
+
+          # binding the rollback function to these exit signals
+          trap rollback INT
+          trap rollback TERM
+
+          # atd must be running in order to use at later
+          atd
+
+          schedule_rollback_attempt
+          inject_latency
+
+          # for the duration of the injection, the flag file is updated, and a rollback check is enqueued
+          while [[ $(date +%s) -lt $STOP_TIME ]] ; do
+            touch $FLAG_PATH
+            schedule_rollback_attempt
+            sleep $MAX_FLAG_AGE_SECONDS
+          done
+
+          # after the desired duration, the latency injection is removed
+          rollback
