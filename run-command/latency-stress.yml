@@ -21,8 +21,8 @@ parameters:
     allowedPattern: '^[0-9a-zA-Z\-]{1,15}$'
   Delay:
     type: String
-    description: "The delay - in milliseconds - to add to the interface (default: 200)."
-    default: "200"
+    description: "The delay - in milliseconds - to add to the interface (default: 100)."
+    default: "100"
     allowedPattern: "^[0-9]+$"
   Duration:
     type: String
@@ -96,7 +96,7 @@ mainSteps:
           RANDOM_STRING=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
           FLAG_PATH="/tmp/AWSFIS-Run-Network-Latency-$RANDOM_STRING.flag"
           ROLLBACK_COMMAND="tc qdisc del dev {{ Interface }} root netem delay {{ Delay }}ms"
-          ROLLBACK_CHECK='if [[ ( ! -f "'$FLAG_PATH'" ) || "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ]]; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
+          ROLLBACK_CHECK='if test ! -f "'$FLAG_PATH'" || test "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
 
           # this will enqueue a rollback check, after $ATTEMPT_ROLLBACK_AT_SECONDS seconds
           schedule_rollback_attempt() {
@@ -117,8 +117,8 @@ mainSteps:
           }
 
           # binding the rollback function to these exit signals
-          trap rollback SIGINT
-          trap rollback SIGTERM
+          trap rollback INT
+          trap rollback TERM
 
           # atd must be running in order to use at later
           atd

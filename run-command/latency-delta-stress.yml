@@ -44,6 +44,10 @@ parameters:
       - 'False'
 mainSteps:
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: InstallDependencies
     description: |
       ## Parameter: InstallDependencies
@@ -73,6 +77,10 @@ mainSteps:
             fi
           fi
   - action: aws:runShellScript
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
     name: AlterNetworkInterface
     description: |
       ## Parameters: Interface, Delay, Delta and Duration
@@ -86,6 +94,7 @@ mainSteps:
       maxAttempts: 1
       runCommand:
         - |
+          #!/bin/bash
           MAX_FLAG_AGE_SECONDS=5
           ATTEMPT_ROLLBACK_AT_SECONDS=10
           STOP_TIME=$(( $(date +%s) + {{ Duration }} ))
@@ -93,29 +102,29 @@ mainSteps:
           RANDOM_STRING=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
           FLAG_PATH="/tmp/AWSFIS-Run-Network-Latency-Delta-$RANDOM_STRING.flag"
           ROLLBACK_COMMAND="tc qdisc del dev {{ Interface }} root netem delay {{ Delay }}ms {{ Delta }}ms"
-          ROLLBACK_CHECK='if [[ ( ! -f "'$FLAG_PATH'" ) || "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ]]; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
+          ROLLBACK_CHECK='if test ! -f "'$FLAG_PATH'" || test "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
 
           # this will enqueue a rollback check, after $ATTEMPT_ROLLBACK_AT_SECONDS seconds
-          function schedule_rollback_attempt {
+          schedule_rollback_attempt() {
             echo "sleep $ATTEMPT_ROLLBACK_AT_SECONDS; $ROLLBACK_CHECK" | at now
           }
 
           # this will delete the flag file, and rollback the latency injection
-          function rollback {
+          rollback() {
             rm $FLAG_PATH
             $ROLLBACK_COMMAND
             exit $?
           }
 
           # this will inject some latency with delta on the network
-          function inject_latency_delta {
+          inject_latency_delta() {
             echo "Injecting latency..."
             tc qdisc add dev {{ Interface }} root netem delay {{ Delay }}ms {{ Delta }}ms
           }
 
           # binding the rollback function to these exit signals
-          trap rollback SIGINT
-          trap rollback SIGTERM
+          trap rollback INT
+          trap rollback TERM
 
           # atd must be running in order to use at later
           atd

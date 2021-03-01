@@ -103,7 +103,7 @@ mainSteps:
           RANDOM_STRING=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
           FLAG_PATH="/tmp/AWSFIS-Run-Network-Packet-Drop-$RANDOM_STRING.flag"
           ROLLBACK_COMMAND="tc qdisc del dev {{ Interface }} root netem loss {{ Loss }}% {{ Correlation }}%"
-          ROLLBACK_CHECK='if [[ ( ! -f "'$FLAG_PATH'" ) || "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ]]; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
+          ROLLBACK_CHECK='if test ! -f "'$FLAG_PATH'" || test "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
 
           # this will enqueue a rollback check, after $ATTEMPT_ROLLBACK_AT_SECONDS seconds
           function schedule_rollback_attempt {
@@ -124,8 +124,8 @@ mainSteps:
           }
 
           # binding the rollback function to these exit signals
-          trap rollback SIGINT
-          trap rollback SIGTERM
+          trap rollback INT
+          trap rollback TERM
 
           # atd must be running in order to use at later
           atd
