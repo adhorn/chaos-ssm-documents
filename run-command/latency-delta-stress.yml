@@ -96,7 +96,7 @@ mainSteps:
           STOP_TIME=$(( $(date +%s) + {{ Duration }} ))
 
           RANDOM_STRING=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
-          FLAG_PATH="/tmp/AWSFIS-Run-Network-Latency-Delta-$RANDOM_STRING.flag"
+          FLAG_PATH="/tmp/Run-Network-Latency-Delta-$RANDOM_STRING.flag"
           ROLLBACK_COMMAND="tc qdisc del dev {{ Interface }} root netem delay {{ Delay }}ms {{ Delta }}ms"
           ROLLBACK_CHECK='if test ! -f "'$FLAG_PATH'" || test "$(( $(date +%s) - $(stat -c "%Y" '$FLAG_PATH') ))" -gt '$MAX_FLAG_AGE_SECONDS' ; then rm '$FLAG_PATH'; '$ROLLBACK_COMMAND' ; fi 2>/dev/null'
 
@@ -123,7 +123,7 @@ mainSteps:
           trap rollback TERM
 
           # atd must be running in order to use at later
-          atd
+          atd || { echo Failed to run atd daemon, exiting... 1>&2 ; exit 1; }
 
           schedule_rollback_attempt
           inject_latency_delta
