@@ -134,6 +134,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# YAML files including generated CloudFormation templates
-*.yaml
-*.yml
+*.old
+cfn-chaos-ssm.yml

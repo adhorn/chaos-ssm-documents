@@ -1,0 +1,21 @@
+---
+description: Block DNS on an instance
+schemaVersion: '2.2'
+parameters:
+  duration:
+    type: String
+    description: The duration - in minutes - of the attack. (Required)
+    default: "1"
+mainSteps:
+- action: aws:runShellScript
+  name: RevertCommandScheduling
+  inputs:
+    runCommand:
+    - "echo 'iptables -D INPUT -p tcp -m tcp --dport 53 -j DROP' | at now + {{ duration }} minutes"
+    - "echo 'iptables -D INPUT -p udp -m udp --dport 53 -j DROP' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterIPtables
+  inputs:
+    runCommand:
+    - "iptables -A INPUT -p tcp -m tcp --dport 53 -j DROP"
+    - "iptables -A INPUT -p udp -m udp --dport 53 -j DROP"

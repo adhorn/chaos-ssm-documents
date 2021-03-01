@@ -1,0 +1,26 @@
+---
+description: Block access to dynamo on an instance
+schemaVersion: '2.2'
+parameters:
+  duration:
+    type: String
+    description: The duration - in minute - of the attack. (Required)
+    default: "1"
+mainSteps:
+- action: aws:runShellScript
+  name: RevertCommandScheduling
+  inputs:
+    runCommand:
+    - "echo 'sudo cp /etc/hosts.back /etc/hosts' | at now + {{ duration }} minutes"
+- action: aws:runShellScript
+  name: AlterHostsFile
+  inputs:
+    runCommand:
+    # make copy of /etc/hosts to /etc/host.back
+    - "sudo cp /etc/hosts /etc/hosts.back"
+    - "echo '127.0.0.1 dynamodb.us-east-1.amazonaws.com' >> /etc/hosts"
+    - "echo '127.0.0.1 dynamodb.us-east-2.amazonaws.com' >> /etc/hosts"
+    - "echo '127.0.0.1 dynamodb.us-west-1.amazonaws.com' >> /etc/hosts"
+    - "echo '127.0.0.1 dynamodb.us-west-2.amazonaws.com' >> /etc/hosts"
+    - "echo '127.0.0.1 dynamodb.eu-west-1.amazonaws.com' >> /etc/hosts"
+    - "echo '127.0.0.1 dynamodb.eu-north-1.amazonaws.com' >> /etc/hosts"
