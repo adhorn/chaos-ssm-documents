@@ -51,6 +51,8 @@ link](https://medium.com/@adhorn/injecting-chaos-to-amazon-ec2-using-amazon-syst
 -   Support for network stress using `network-corruption-stress.yml`
 -   Support for packet Loss stress using `network-loss-stress.yml`
 -   Support for killing a process by name using `kill-process.yml`
+-   Support for diskspace stress using `diskspace-stress.yml`
+
 
 **Experimental**
 
