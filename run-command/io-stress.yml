@@ -3,7 +3,7 @@ description: |
   ## What does this document do?
   It runs IO stress on an instance via stress-ng tool.
   ## Input Parameters
-  * Duration: (Required) The duration - in seconds - of the CPU stress.
+  * Duration: (Required) The duration - in seconds - of the IO stress.
   * Iomix: Specify the number of mixed IO stressors to use (default 1)
   * Percent: Specify the percentage of the available file system space used by each stressor. (default 80)
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default True)
