@@ -23,7 +23,7 @@ mainSteps:
           Write-Host "Schedule job to delete the DNS rules that will be added later"
           $refjob = Start-Job -ScriptBlock $chaosRevertjob
                    
-          New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Outbound –LocalPort 3306 -Protocol TCP -Action Block | Out-Null
+          New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Outbound –RemotePort 3306 -Protocol TCP -Action Block | Out-Null
           New-NetFirewallRule -DisplayName "CHAOS Block RDS" -Direction Inbound –LocalPort 3306 -Protocol TCP -Action Block | Out-Null
           Write-Host "Blocked Port 3306 Outbound and Inbound"
 
