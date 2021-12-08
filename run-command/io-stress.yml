@@ -1,87 +1,107 @@
 ---
+#==================================================
+# SSM Run Command Document:
+# Defines the configuration and the steps to
+# run by SSM Run Command on Ec2 Instances
+#==================================================
 description: |
   ## What does this document do?
-  It runs IO stress on an instance via stress-ng tool.
+  It runs IO stress on an instance via stress-ng tool. If stress-ng is not already installed on the instance, this SSM document will install it, unless InstallDependencies parameter is set to False.
+  This SSM document supports Amazon Linux and Ubuntu operating systems only.
+
+  ## Dependencies installed by this SSM Document
+  * stress-ng
+  Note: This SSM document does not uninstall dependencies once installed. If you don't want this SSM document to install any dependencies, set InstallDependencies to False and bake the dependencies into your EC2 instance. For example, by using image-builder (https://aws.amazon.com/image-builder/).
+
   ## Input Parameters
-  * Duration: (Required) The duration - in seconds - of the IO stress.
-  * Iomix: Specify the number of mixed IO stressors to use (default 1)
+  * DurationSeconds: (Required) The duration - in seconds - of the IO stress.
+  * Workers: Specify the number of mixed IO stressors to use (default 1)
   * Percent: Specify the percentage of the available file system space used by each stressor. (default 80)
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default True)
 
 schemaVersion: '2.2'
 parameters:
-  Duration:
+  DurationSeconds:
     type: String
-    description: "(Required) The duration - in seconds - of the IO stress."
-    allowedPattern: "^[0-9]+$"
-    default: "60"
-  Iomix:
+    description: (Required) The duration - in seconds - of the IO stress.
+    allowedPattern: ^[0-9]+$
+  Workers:
     type: String
-    description: 'Specify the number of mixed IO stressors to use (default 1)'
-    default: "1"
-    allowedPattern: "^[0-9]+$"
+    description: Specify the number of mixed IO stressors to use (default 1)
+    default: '1'
+    allowedPattern: ^[0-9]+$
   Percent:
     type: String
-    description: 'Specify the percentage of the available file system space used by each stressor. (default 80)'
-    default: "80"
-    allowedPattern: "^[0-9]+$"
+    description: Specify the percentage of the available file system space used by
+      each stressor. (default 80)
+    default: '80'
+    allowedPattern: ^([1-9][0-9]?|100)$
   InstallDependencies:
     type: String
-    description: 'If set to True, Systems Manager installs the required dependencies on the target instances (default: True)'
+    description: 'If set to True, Systems Manager installs the required dependencies
+      on the target instances (default: True)'
     default: 'True'
     allowedValues:
-      - 'True'
-      - 'False'
+    - 'True'
+    - 'False'
 mainSteps:
-  - action: aws:runShellScript
-    precondition:
-      StringEquals:
-        - platformType
-        - Linux
-    name: InstallDependencies
-    description: |
-      ## Parameter: InstallDependencies
-      If set to True, this step installs the required dependency via operating system's repository. It supports both
-      Debian (apt) and CentOS (yum) based package managers.
-    inputs:
-      runCommand:
-        - |
-          #!/bin/bash
-          if  [[ "{{ InstallDependencies }}" == True ]] ; then
-            if [[ "$( which stress-ng 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
-            echo "Installing required dependencies"
-            if [ -f  "/etc/system-release" ] ; then
-              if cat /etc/system-release | grep -i 'Amazon Linux' ; then
-                sudo amazon-linux-extras install testing
-                sudo yum -y install stress-ng
-              else
-                echo "There was a problem installing dependencies."
-                exit 1
-              fi
-            elif cat /etc/issue | grep -i Ubuntu ; then
-              sudo apt-get update -y
-              sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y stress-ng
-            else
-              echo "There was a problem installing dependencies."
-              exit 1
-            fi
+- action: aws:runShellScript
+  name: InstallDependencies
+  precondition:
+    StringEquals:
+    - platformType
+    - Linux
+  description: |
+    ## Parameter: InstallDependencies
+    If set to True, this step installs the required dependecy via operating system's repository. It supports both
+    Debian (apt) and CentOS (yum) based package managers.
+  inputs:
+    onFailure: exit
+    runCommand:
+    - |
+      #!/bin/bash
+
+      if [[ "$( which stress-ng 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
+      if  [[ "{{ InstallDependencies }}" == True ]] ; then
+        echo "Installing required dependencies"
+        if [ -f  "/etc/system-release" ] ; then
+          if cat /etc/system-release | grep -i 'Amazon Linux' ; then
+            # Use amazon-linux-extras if available (Amazon Linux 2). Don't need it otherwise (Amazon Linux 1)
+            which amazon-linux-extras 2>/dev/null 1>&2 && sudo amazon-linux-extras install testing
+            sudo yum -y install stress-ng
+          else
+            echo "There was a problem installing dependencies."
+            exit 1
           fi
-  - action: aws:runShellScript
-    precondition:
-      StringEquals:
-        - platformType
-        - Linux
-    name: ExecuteStressNg
-    description: |
-      ## Parameters: Duration, Iomix, and Percent
-      This step will perform an IO stress for the specified Duration time
-      in seconds.
-    inputs:
-      maxAttempts: 1
-      runCommand:
-        - |
-          if [ {{ Duration }} -lt 1 ] || [ {{ Duration }} -gt 43200 ] ; then echo Duration parameter value must be between 1 and 43200 seconds && exit; fi
-          pgrep stress-ng && echo Another stress-ng command is running, exiting... && exit
-          echo Initiating IO stress for {{ Duration }} seconds...
-          stress-ng --iomix {{ Iomix }} --iomix-bytes {{ Percent }}% -t {{ Duration }}s
-          echo Finished IO stress.
+        elif cat /etc/issue | grep -i Ubuntu ; then
+          sudo apt-get update -y
+          sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y stress-ng
+        else
+          echo "There was a problem installing dependencies."
+          exit 1
+        fi
+      else
+        echo "Dependencies are not installed - Please set InstallDependencies to True."
+        exit 1
+      fi
+- action: aws:runShellScript
+  name: ExecuteStressNg
+  precondition:
+    StringEquals:
+    - platformType
+    - Linux
+  description: |
+    ## Parameters: DurationSeconds, Workers, and Percent
+    This step will perform an IO stress for the specified Duration time in seconds.
+  inputs:
+    maxAttempts: 1
+    runCommand:
+    - |
+      #!/bin/bash
+
+      if [ {{ DurationSeconds }} -lt 1 ] || [ {{ DurationSeconds }} -gt 43200 ] ; then echo DurationSeconds parameter value must be between 1 and 43200 && exit 1; fi
+      if [ {{ Percent }} -lt 1 ] || [ {{ Percent }} -gt 100 ] ; then echo Percent parameter value must be between 1 and 100 && exit 1; fi
+      pgrep stress-ng && echo Another stress-ng command is running, exiting... && exit 1
+      echo Initiating IO stress for {{ DurationSeconds }} seconds...
+      stress-ng --iomix {{ Workers }} --iomix-bytes {{ Percent }}% -t {{ DurationSeconds }}s
+      echo Finished IO stress.
