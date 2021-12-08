@@ -6,36 +6,44 @@
 #==================================================
 description: |
   ## What does this document do?
-  It adds latency to the network traffic using tc. If tc is not already installed on the instance, this SSM document will install it together with other dependencies listed below.
+  It drops incoming or outgoing traffic for a configurable protocol (tcp or udp) and port using iptables. If iptables is not already installed on the instance, this SSM document will install it together with other dependencies listed below.
   This SSM document supports Amazon Linux and Ubuntu operating systems only.
 
   ## Dependencies installed by this SSM Document
-  * tc
+  * iptables
   * atd
   Note: This SSM document does not uninstall dependencies once installed. If you don't want this SSM document to install any dependencies, set InstallDependencies to False and bake the dependencies into your EC2 instance. For example, by using image-builder (https://aws.amazon.com/image-builder/).
 
   ## Input Parameters
-  * Interface: The interface to add delay to (default: eth0).
-  * DelayMilliseconds: The delay - in milliseconds - to add to the interface (default: 200).
+  * Protocol: (Required) The protocol to blackhole.
+  * Port: (Required) The port to blackhole.
+  * TrafficType: The type of traffic to blackhole (default: ingress).
   * DurationSeconds: (Required) The duration - in seconds - of the test.
   * InstallDependencies: If set to True, Systems Manager installs the required dependencies on the target instances. (default: True).
 
 schemaVersion: '2.2'
 parameters:
-  Interface:
+  Protocol:
     type: String
-    description: 'The interface to add delay to (default: eth0).'
-    default: eth0
-    allowedPattern: ^[0-9a-zA-Z\-]{1,15}$
-  DelayMilliseconds:
+    description: (Required) Specify the protocol to blackhole (tcp|udp).
+    allowedValues:
+    - tcp
+    - udp
+  Port:
     type: String
-    description: 'The delay - in milliseconds - to add to the interface (default:
-      200).'
-    default: '200'
-    allowedPattern: ^[0-9]+$
+    description: (Required) Specify the port to blackhole.
+    allowedPattern: ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$
+  TrafficType:
+    type: String
+    description: 'Specify the type of traffic to blackhole (egress|ingress) (default:
+      ingress).'
+    default: ingress
+    allowedValues:
+    - egress
+    - ingress
   DurationSeconds:
     type: String
-    description: (Required) The duration - in seconds - of the fault injection.
+    description: (Required) The duration - in seconds - of the test.
     allowedPattern: ^[0-9]+$
   InstallDependencies:
     type: String
@@ -54,7 +62,7 @@ mainSteps:
     - Linux
   description: |
     ## Parameter: InstallDependencies
-    If set to True, this step installs the required dependecy via operating system's repository. It supports both
+    If set to True, this echo installs the required dependecy via operating system's repository. It supports both
     Debian (apt) and CentOS (yum) based package managers.
   inputs:
     onFailure: exit
@@ -62,22 +70,21 @@ mainSteps:
     - |
       #!/bin/bash
 
-      if [[ "$( which tc 2>/dev/null )" && "$( which atd 2>/dev/null )" ]] ; then echo Dependency is already installed. ; exit ; fi
+      if [[ "$( which iptables 2>/dev/null )" && "$( which atd 2>/dev/null )" ]]; then echo dependencies already installed. ; exit ; fi
       if  [[ "{{ InstallDependencies }}" == True ]] ; then
         echo "Installing required dependencies"
         if [ -f  "/etc/system-release" ] ; then
           if cat /etc/system-release | grep -i 'Amazon Linux' ; then
-            sudo amazon-linux-extras install testing
-            sudo yum -y install tc at
+            yum -y install iptables at
           else
             echo "There was a problem installing dependencies."
             exit 1
           fi
         elif cat /etc/issue | grep -i Ubuntu ; then
-          sudo apt-get update -y
-          sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y iproute2 at
+          apt-get update -y
+          DEBIAN_FRONTEND=noninteractive apt-get install -y iptables at
         else
-          echo "Exiting - This SSM document supports Amazon Linux and Ubuntu operating systems only."
+          echo "There was a problem installing dependencies."
           exit 1
         fi
       else
@@ -91,46 +98,34 @@ mainSteps:
     - platformType
     - Linux
   description: |
-    ## Parameters: Interface, DelayMilliseconds and DurationSeconds
-    This step adds a `DelayMilliseconds` delay to `Interface` for the given `DurationSeconds`, using the `tc` (Traffic Control) command.
-    The script will inject latency on the network, and wait for the given duration to remove that. It has two rollback mechanisms in place:
-    * It will listen for exit signals (SIGINT and SIGTERM), and will stop the latency injection if any of them is received.
+    ## Parameters: Protocol, Port, TrafficType, and DurationSeconds
+    This step blocks  `Protocol` 'TrafficType' traffic to `Port` for the given `DurationSeconds`, using the `iptables` command.
+    The script will block the traffic, and wait for the given duration to remove that. It has two rollback mechanisms in place:
+    * It will listen for exit signals (SIGINT and SIGTERM), and will stop the fault injection if any of them is received.
     * It will periodically enqueue rollback checks into a queue (using `at` command). This way, if the command is stopped and the rollback
-    was not executed, the enqueued commands will try to stop it. (for example, if the command is stopped using kill -9). This is
-    a safety check to avoid latency to remain injected after the script is no longer running.
+    was not executed, the enqueued commands will to stop it. (for example, if the command is stopped using kill -9). This is just
+    and extra safety check to avoid the fault to remain injected after the script is no longer running.
   inputs:
     maxAttempts: 1
     runCommand:
     - |
       #!/bin/bash
 
-      INTERFACE={{ Interface }}
-      DELAYMILLISECONDS={{ DelayMilliseconds }}
+      PORT={{ Port }}
+      PROTOCOL={{ Protocol }}
       DURATION={{ DurationSeconds }}
-
-      if ! [[ "$( ip a ls $INTERFACE 2>/dev/null )" ]] ; then
-        echo "Interface $INTERFACE does not exist."
-        exit 1
-      fi
+      TRAFFIC={{ TrafficType }}
 
       if [ $DURATION -lt 1 ] || [ $DURATION -gt 43200 ]; then
-        echo "Parameter DurationSeconds must be between 1 and 43200, was: '$DURATION'"
-        exit 1
+          echo "Parameter DurationSeconds must be between 1 and 43200, was: '$DURATION'"
+          exit 1
       fi
 
-      if [ $DELAYMILLISECONDS -lt 1 ] ; then
-        echo "Parameter Delay must be a positive value"
-        exit 1
-      fi
+      FAULT_NAME="Run-Network-Blackhole-Port"
 
-      FAULT_NAME="Run-Network-Latency"
-
-      MAX_FLAG_AGE_SECONDS=5
-      ATTEMPT_ROLLBACK_AT_SECONDS=10
-      STOP_TIME=$(( $(date +%s) + $DURATION ))
-
-      IP_CIDR_REGEX="^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(3[0-2]|[1-2][0-9]|[0-9]))$"
       IP_REGEX="^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+
+      DELETE_MSG="#delete-after-fault-injection"
       IMDS_IP=169.254.169.254
 
       # Get the REGION of the instance
@@ -140,10 +135,7 @@ mainSteps:
         grep region | awk -F\" '{print $4}'
       )
 
-      IP_ADDRESSES_SSM_ENDPOINTS=()
-
-      DELETE_MSG="#delete-after-fault-injection"
-
+      # List of endpoint we want to preserve (SSM and EC2 metadata API)
       ENDPOINTS=(
           "ssmmessages.$EC2_REGION.amazonaws.com"
           "ssm.$EC2_REGION.amazonaws.com"
@@ -153,69 +145,85 @@ mainSteps:
 
       force_dns()
       {
-          # Force any new DNS resolution for that host to the latest known IPs
-          params=("$@")
-          hostname=${params[0]}   # Hostname is expected as first argument
-          ips=("${params[@]:1}")  # The rest will be the IPs
-          for ip in $(echo "${ips[@]}"); do
-            echo "$ip $hostname $DELETE_MSG" >> /etc/hosts
-          done
+          # Force any new DNS resolution for that host to the latests known IPs
+          echo "$1 $2 $DELETE_MSG" >> /etc/hosts
       }
 
       get_ips()
       {
-          # Returns if the input is a valid IP/CIDR string, empty otherwise
-          local var_ip_cidr=$(grep -E "$IP_CIDR_REGEX" <<< "$1")
-          [  -z "$var_ip_cidr" ] || { echo $var_ip_cidr ; return ;}
-
           # Returns if the input is a valid IP string, empty otherwise
-          local var_ip=$(grep -E "$IP_REGEX" <<< "$1")
-          [  -z "$var_ip" ] || { echo $var_ip ; return ;}
+          local var_ip
+          var_ip=$(grep -E "$IP_REGEX" <<< "$1")
+          [  -z "$var_ip" ] || { echo "$var_ip" ; return ;}
 
           # Returns IPs of the domain and force DNS resolution to that IP, empty otherwise
-          # Since `dig` can return different IPs, we call it 10 times to maximize the chances of covering as many IPs as possible for the provided domain
-          local var_dns=()
-          for i in $(seq 1 10)
-          do
-              dig_output=( $(dig +short $1 | grep -v '[[:alpha:]]') )
-              var_dns=("${var_dns[@]}" "${dig_output[@]}")
-          done
-          var_unique_dns=( $(printf '%s\n' "${var_dns[@]}" | sort -u) )
-          [  -z "$var_unique_dns" ] || { echo "${var_unique_dns[@]}" ; force_dns $1 "${var_unique_dns[@]}" ; return ;}
+          local var_dns
+          var_dns=$(dig +short $1)
+          [  -z "$var_dns" ] || { echo "$var_dns" ; force_dns "$var_dns" "$1" ; return ;}
       }
 
-      # Getting IPs from SSM endpoints
-      for e in ${ENDPOINTS[*]}; do
-          var_endpoint=$(get_ips $e)
-          IP_ADDRESSES_SSM_ENDPOINTS=("${IP_ADDRESSES_SSM_ENDPOINTS[@]}" "${var_endpoint[@]}")
-      done
-
-      # Adds Latency to the network interface
+      # Creating the fault commands
       read -r -d '' ENABLE_FAULT_COMMAND <<'EOF'
-        # Exit if FIS network fault is already running
-        test_file_exit() {
-            if [ "$(ls "$1" 2>/dev/null | wc -l)" -ge "1" ]; then { echo "Fault might be already running (Found flag file matching "$1"). Exiting..." 1>&2 ; exit 1; } ; fi;
-        }
-        test_file_exit /var/lib/amazon/ssm/Run-Network-*.flag
 
-        echo "Injecting fault..."
-        # Send all traffic by default to the band 1:3
-        tc qdisc add dev $INTERFACE root handle 1: prio priomap 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-        for k in ${IP_ADDRESSES_SSM_ENDPOINTS[*]}; do
-            # Redirect the matching ip addresses to the band 0 where is no filters
-            tc filter add dev $INTERFACE protocol ip parent 1:0 prio 1 u32 match ip dst $k flowid 1:1
-        done
-        # Creates the qdisc in the band 3, affecting all the rest of the traffic
-        tc qdisc add dev $INTERFACE parent 1:3 handle 10: netem delay "${DELAYMILLISECONDS}"ms
+      # Exit if FIS network fault is already running
+      test_file_exit() {
+          if [ "$(ls "$1" 2>/dev/null | wc -l)" -ge "1" ]; then { echo "Fault might be already running (Found flag file matching "$1"). Exiting..." 1>&2 ; exit 1; } ; fi;
+      }
+      test_file_exit /var/lib/amazon/ssm/Run-Network-*.flag
+
+      if [[ "${PORT}" =~ ^(443|80)$ ]] && [ "$TRAFFIC" = "egress" ]; then
+          # Create new iptables chain
+          iptables -N fault-in || { echo iptables chain already exist, fault might be already running. Exiting... 1>&2 ; exit 1; }
+          iptables -N fault-out || { echo iptables chain already exist, fault might be already running. Exiting... 1>&2 ; exit 1; }
+
+          # Allowlist the SSM endpoints
+          for e in ${ENDPOINTS[*]};
+              do
+                  get_ips $e >/dev/null 2>&1 # Get the IP and modify the /etc/hosts for domain names
+                  iptables -A fault-out -p tcp --dport ${PORT} -d $e -j ACCEPT
+                  iptables -A fault-in -m conntrack --ctstate ESTABLISHED,RELATED -d $e -j ACCEPT
+          done
+          iptables -I INPUT -j fault-in
+
+          # Block the requested port/protocol
+          iptables -A fault-out -p ${PROTOCOL} --dport ${PORT} -j DROP
+          iptables -I OUTPUT -j fault-out
+
+      elif ! [[ "${PORT}" =~ ^(443|80)$ ]] && [ "${TRAFFIC}" = "egress" ] ; then
+          # Create new iptables chain
+          iptables -N fault-out || { echo iptables chain already exist, fault might be already running. Exiting... 1>&2 ; exit 1; }
+          # Block the requested port/protocol
+          iptables -A fault-out -p ${PROTOCOL} --dport ${PORT} -j DROP
+          iptables -I OUTPUT -j fault-out
+
+      elif [ "${TRAFFIC}" = "ingress" ] ; then
+          # Create new iptables chain
+          iptables -N fault-in || { echo iptables chain already exist, fault might be already running. Exiting... 1>&2 ; exit 1; }
+          # Block the requested port/protocol
+          iptables -A fault-in -p ${PROTOCOL} --dport ${PORT} -j DROP
+          iptables -I INPUT -j fault-in
+      fi
+
       EOF
 
-      # Removes Packet Loss from the network interface
+      # Creating the disable fault commands
       read -r -d '' DISABLE_FAULT_COMMAND <<EOF
-        echo "Rolling back..."
-        tc filter del dev $INTERFACE prio 1
-        tc qdisc del dev $INTERFACE parent 1:3 handle 10:
-        tc qdisc del dev $INTERFACE root handle 1: prio
-        sed -ie "/$DELETE_MSG/d" /etc/hosts
+      echo "Rolling back..."
+      check_chain_exists()
+      {
+          iptables --list "\$1" >/dev/null 2>&1
+      }
+      if check_chain_exists fault-out; then
+          iptables -F fault-out
+          iptables -D OUTPUT -j fault-out
+          iptables -X fault-out
+      fi
+      if check_chain_exists  fault-in; then
+          iptables -F fault-in
+          iptables -D INPUT -j fault-in
+          iptables -X fault-in
+      fi
+      sed -ie "/$DELETE_MSG/d" /etc/hosts
       EOF
 
       STOP_TIME=$(( $(date +%s) + $DURATION ))
