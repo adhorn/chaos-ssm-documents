@@ -4,7 +4,7 @@ description: |
   Adding packet loss to the network
   Drops 7% of packets with 25% correlation
   ## Input Parameters
-  * Interface: The interface to add delay to (default: eth0).
+  * Interface: The interface to add loss to (default: eth0).
   * Loss: The percent of packet to drop (default: 7).
   * Correlation: The correlation - in percent - with previous packet loss (default: 25).
   * Duration: The duration - in seconds - of the test (default: 60).

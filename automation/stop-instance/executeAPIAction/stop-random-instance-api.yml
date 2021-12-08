@@ -65,11 +65,14 @@ mainSteps:
 - name: stopInstances
   action: aws:changeInstanceState
   onFailure: Continue
+  onCancel: 'step:rollback'
   inputs:
     InstanceIds: 
       - "{{ SeletRandomInstance.InstanceId }}"
     DesiredState: stopped
 - name: forceStopInstances
+  onFailure: 'step:rollback'
+  onCancel: 'step:rollback'
   action: aws:changeInstanceState
   inputs:
     InstanceIds: 
@@ -90,6 +93,12 @@ mainSteps:
     DesiredValues:
       - stopped
       - terminated
+- name: rollback
+  action: aws:changeInstanceState
+  inputs:
+    InstanceIds: 
+      - "{{ SeletRandomInstance.InstanceId }}"
+    DesiredState: running
 
 outputs:
 - "listInstances.InstanceIds"

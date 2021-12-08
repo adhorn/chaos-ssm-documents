@@ -1,0 +1,273 @@
+---
+
+  #==================================================
+  # SSM Automation Document / Runbook:
+  # Defines the configuration as well as the
+  # the steps to be run by SSM Automation
+  #==================================================
+
+description: |
+  ### Document Name - NACL-FIS-Automation
+
+  ## What does this document do?
+  This document modifies the subnets of a particular VPC to deny traffic in the Subnets associated with a particular AZ. Rollback on Cancel or Failure. 
+
+  ## Security Risk
+  Low: This fault does not change the security posture of the VPC since by default the NACL created denies all traffic in the subnet associated with an AZ. It can also easily manually rolled back if necessary since the created NACL is tagged for easy identification.
+
+  ## Input Parameters
+  * AutomationAssumeRole: (Optional) The ARN of the role that allows Automation to perform the actions on your behalf.
+  * VPCId: (Required) The ID of the VPC where the subnet reside.
+  * AvailabilityZone: (Required) The Availability Zone to impact
+  * Duration: (Optional) ** Default 1 minute ** Maximum duration the fault can exist for.
+
+  ## Supports Rollback
+  Yes. The Nacl association is reverted.
+
+  ## Cancellation behaviour
+  The Nacl association is reverted.   
+
+  ## Output Parameters
+  This document has no outputs.
+
+  ## Minimum Permissions Required
+  * `ec2:RevokeSecurityGroupIngress`
+  * `ec2:AuthorizeSecurityGroupIngress`
+  * `ec2:DescribeSecurityGroups`
+  * `ec2:DescribeInstances``
+  * `ec2:DescribeInstanceStatus`
+  * `ec2:TerminateInstances`
+  * `autoscaling:DescribeAutoScalingGroups`
+
+  ## Additional Permissions for logging
+  * logs:CreateLogStream
+  * logs:CreateLogGroup
+  * logs:PutLogEvents
+  * logs:DescribeLogGroups
+  * logs:DescribeLogStreams
+
+schemaVersion: '0.3'
+
+#==================================================
+# Role assumed my the automation document / runbook
+#==================================================
+assumeRole: "{{ AutomationAssumeRole }}"
+
+#==================================================
+# SSM automation document parameters
+#==================================================
+
+parameters:
+  AvailabilityZone:
+    type: String
+    description: "(Required) The Availability Zone to impact"
+    default: "us-east-1a"
+  VPCId:
+    type: String
+    description: "The ID of the VPC where the subnet reside"
+  Duration:
+    type: String
+    description: "The duration - in ISO-8601 format - of the attack. (Required)"
+    default: "PT1M"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform
+      the actions on your behalf."
+
+#==================================================
+# Automation steps
+#==================================================
+
+mainSteps:
+- name: InjectFaultNacl
+  onFailure: 'step:rollback'
+  onCancel: 'step:rollback'
+  action: aws:executeScript
+  inputs:
+    Runtime: python3.6
+    Handler: inject_fault
+    InputPayload:
+      az_name:
+        - "{{ AvailabilityZone }}"
+      vpc_id:
+        - "{{ VPCId }}"
+    Script: |-
+        import logging
+        import boto3
+        import time
+
+        def create_chaos_nacl(ec2_client, vpc_id):
+            logger = logging.getLogger(__name__)
+            logger.info('Create a Chaos Network ACL')
+            # Create a Chaos Network ACL
+            chaos_nacl = ec2_client.create_network_acl(
+                VpcId=vpc_id,
+            )
+            associations = chaos_nacl['NetworkAcl']
+            chaos_nacl_id = associations['NetworkAclId']
+            time.sleep(5)
+            # Tagging the network ACL with chaos for obvious reasons
+            ec2_client.create_tags(
+                Resources=[
+                    chaos_nacl_id,
+                ],
+                Tags=[
+                    {
+                        'Key': 'Name',
+                        'Value': 'chaos-nacl'
+                    },
+                ]
+            )
+            # Create Egress and Ingress rule blocking all inbound and outbound traffic
+            # Egress
+            ec2_client.create_network_acl_entry(
+                CidrBlock='0.0.0.0/0',
+                Egress=True,
+                PortRange={'From': 0, 'To': 65535, },
+                NetworkAclId=chaos_nacl_id,
+                Protocol='-1',
+                RuleAction='deny',
+                RuleNumber=100,
+            )
+
+            # Ingress
+            ec2_client.create_network_acl_entry(
+                CidrBlock='0.0.0.0/0',
+                Egress=False,
+                PortRange={'From': 0, 'To': 65535, },
+                NetworkAclId=chaos_nacl_id,
+                Protocol='-1',
+                RuleAction='deny',
+                RuleNumber=101,
+            )
+            return chaos_nacl_id
+
+
+        def get_subnets_to_chaos(ec2_client, vpc_id, az_name):
+            logger = logging.getLogger(__name__)
+            logger.info('Getting the list of subnets to fail')
+            # Describe the subnet so you can see if it is in the AZ
+            subnets_response = ec2_client.describe_subnets(
+                Filters=[
+                    {
+                        'Name': 'availability-zone',
+                        'Values': [az_name]
+                    },
+                    {
+                        'Name': 'vpc-id',
+                        'Values': [vpc_id]
+                    }
+                ]
+            )
+            subnets_to_chaos = [
+                subnet['SubnetId'] for subnet in subnets_response['Subnets']
+            ]
+            return subnets_to_chaos
+
+        def get_nacls_to_chaos(ec2_client, subnets_to_chaos):
+            logger = logging.getLogger(__name__)
+            logger.info('Getting the list of NACLs to blackhole')
+
+            # Find network acl associations mapped to the subnets_to_chaos
+            acls_response = ec2_client.describe_network_acls(
+                Filters=[
+                    {
+                            'Name': 'association.subnet-id',
+                            'Values': subnets_to_chaos
+                    }
+                ]
+            )
+            network_acls = acls_response['NetworkAcls']
+
+            # SAVE THEM so it can revert
+            nacl_ids = []
+
+            for nacl in network_acls:
+                for nacl_association in nacl['Associations']:
+                    if nacl_association['SubnetId'] in subnets_to_chaos:
+                        nacl_association_id, nacl_id = nacl_association[
+                            'NetworkAclAssociationId'], nacl_association['NetworkAclId']
+                        nacl_ids.append((nacl_association_id, nacl_id))
+
+            return nacl_ids
+
+        def apply_chaos_config(ec2_client, nacl_ids, chaos_nacl_id):
+            logger = logging.getLogger(__name__)
+            logger.info('Saving original config & applying new chaos config')
+            save_for_rollback = []
+            # Modify the association of the subnets_to_chaos with the Chaos NetworkACL
+            for nacl_association_id, nacl_id in nacl_ids:
+                response = ec2_client.replace_network_acl_association(
+                    AssociationId=nacl_association_id,
+                    NetworkAclId=chaos_nacl_id
+                )
+                save_for_rollback.append(
+                  { 
+                    "NewAssociationId": response['NewAssociationId'],
+                    "Nacl_Id": nacl_id
+                  }
+                )
+            return save_for_rollback
+
+        def inject_fault(events, context):
+
+            az_name = events['az_name'][0]
+            vpc_id = events['vpc_id'][0]
+
+            logger = logging.getLogger(__name__)
+            ec2_client = boto3.client('ec2')
+            chaos_nacl_id = create_chaos_nacl(ec2_client, vpc_id)
+            subnets_to_chaos = get_subnets_to_chaos(ec2_client, vpc_id, az_name)
+            nacl_ids = get_nacls_to_chaos(ec2_client, subnets_to_chaos)
+
+            # Blackhole networking to EC2 instances in failed AZ
+            save_for_rollback = apply_chaos_config(ec2_client, nacl_ids, chaos_nacl_id)
+            return {
+              'saved_configuration': save_for_rollback,
+              'chaos_nacl_id': chaos_nacl_id
+            }
+  outputs:
+    - Name: Rollback
+      Selector: $.Payload.saved_configuration
+      Type: MapList
+    - Name: ChaosNacl
+      Selector: $.Payload.chaos_nacl_id
+      Type: String
+- name: sleep
+  action: aws:sleep
+  onFailure: 'step:rollback'
+  onCancel: 'step:rollback'
+  inputs:
+    Duration: "{{ Duration }}"
+- name: rollback
+  action: aws:executeScript
+  inputs:
+    Runtime: python3.6
+    Handler: rollback
+    InputPayload:
+      rollback:
+        - "{{ InjectFaultNacl.Rollback }}"
+      chaos_nacl:
+        - "{{ InjectFaultNacl.ChaosNacl }}"
+    Script: |-
+        import logging
+        import boto3
+
+        def rollback(events, context):
+            save_for_rollback = events['rollback']
+
+            logger = logging.getLogger(__name__)
+            logger.info('Rolling back Network ACL to original configuration')
+            ec2_client = boto3.client('ec2')
+
+            # Rollback the initial association
+            for conf in save_for_rollback:
+                ec2_client.replace_network_acl_association(
+                    AssociationId=conf["NewAssociationId"],
+                    NetworkAclId=conf["Nacl_Id"]
+                )
+            logger.info('Deleting the Chaos NACL')
+            # delete the Chaos NACL
+            ec2_client.delete_network_acl(
+                NetworkAclId=events['chaos_nacl'][0]
+            )
