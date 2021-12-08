@@ -6,29 +6,23 @@ link](https://medium.com/@adhorn/injecting-chaos-to-amazon-ec2-using-amazon-syst
 
 **Support Canceling & Rollback (10s max)**
 
--   Support for latency injection using `latency-stress.yml`
--   Support for latency with delta stress using
-   `latency-delta-stress.yml`
--   Support for CPU burn using `cpu-stress.yml`
+
+-   Support for killing a process by name using `kill-process.yml`
+-   Support for CPU stress using `cpu-stress.yml`
 -   Support for IO stress using `io-stress.yml`
 -   Support for memory stress using `memory-stress.yml`
--   Support for network stress using `network-corruption-stress.yml`
--   Support for packet Loss stress using `network-loss-stress.yml`
--   Support for killing a process by name using `kill-process.yml`
 -   Support for diskspace stress using `diskspace-stress.yml`
+-   Support for latency injection to network traffic on a particular network interface using `latency-stress.yml`
+-   Support for latency injection with jitter to outgoing or incoming traffic from a configurable list of sources (Supported: IPv4, IPv4/CIDR, Domain name, DYNAMODB|S3) using `latency-stress-sources.yml`
+-   Support for packet loss injection to network traffic on a particular network interface using `network-loss-stress.yml`
+-   Support for packet loss injection to outgoing or incoming traffic from a configurable list of sources (Supported: IPv4, IPv4/CIDR, Domain name, DYNAMODB|S3) using `network-loss-sources.yml`
 
 
 **Experimental**
 
--   Support for configurable blackhole stress using
-    `blackhole-stress.yml`
 -   Support for blackhole S3 stress using `blackhole-s3-stress.yml`
--   Support for blackhole DynamoDB stress using
-    `blackhole-dynamo-stress.yml`
+-   Support for blackhole DynamoDB stress using `blackhole-dynamo-stress.yml`
 -   Support for blackhole EC2 stress using `blackhole-ec2-stress.yml`
--   Support for blackhole DNS stress using `blackhole-dns-stress.yml`
--   Support for latency injection to a particular AWS service 
-    `latency-service-stress.yml`
 
 **Prerequisites**
 

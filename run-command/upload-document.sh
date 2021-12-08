@@ -2,6 +2,8 @@
 while getopts ":r:" arg; do
   case $arg in
     r) REGION=$OPTARG;;
+    *) echo "usage: $0 [-v] [-r]" >&2
+       exit 1 ;;
   esac
 done
 for file in *.yml
