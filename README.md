@@ -33,6 +33,14 @@ Upload an SSM Automation document:
 ``` {.sourceCode .shell}
 aws ssm create-document --name "StopRandomInstances-API" --content file://stop-random-instance-api.yml --document-type "Automation" --document-format YAML
 ```
+Upload all of the SSM Documents to the AWS region of your choice
+================================================================
+
+``` {.sourceCode .shell}
+cd chaos-ssm-documents/run-command
+
+./upload-document.sh -r eu-west-1 (or other region of your choice)
+```
 
 SSM Run Command documents:
 ==========================
@@ -88,22 +96,6 @@ cd chaos-ssm-documents/run-command
 ./upload-document.sh -r eu-west-1 (or other region of your choice)
 ```
 
-Upload all of the SSM Documents using CloudFormation
-====================================================
-
-``` {.sourceCode .shell}
-cd chaos-ssm-documents/
-
-run-command/create-cfn.sh run-command/ | tee cfn-chaos-ssm.yml
-
-aws cloudformation create-stack --stack-name ChaosSsm --template-body file://cfn-chaos-ssm.yml
-```
-
-Specify AWS region using AWS CLI --region argument.
-
-Once deployed, the stack cannot be updated. Remove existing stack and
-re-deploy to apply changes.
-
 SOME WORDS OF CAUTION BEFORE YOU START BREAKING THINGS:
 =======================================================
 
@@ -118,27 +110,3 @@ SOME WORDS OF CAUTION BEFORE YOU START BREAKING THINGS:
     experiments to build confidence in your application — and you own
     tools — to withstand turbulent conditions.
 
-One-click Deploy via CloudFormation
-===================================
-
-| Region         | Launch Stack              |
-|----------------|---------------------------|
-| US East (N. Virginia) `us-east-1` | [Launch Stack](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm) |
-| US East (Ohio) `us-east-2` | [Launch Stack](https://us-east-2.console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm) |
-| US West (N. California) `us-west-1` | [Launch Stack](https://us-west-1.console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm) |
-| US West (Oregon) `us-west-2` | [Launch Stack](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm) |
-| Canada (Central) `ca-central-1` | [Launch Stack](https://ca-central-1.console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Africa (Cape Town) `af-south-1` | [Launch Stack](https://af-south-1.console.aws.amazon.com/cloudformation/home?region=af-south-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Asia Pacific (Hong Kong) `ap-east-1` | [Launch Stack](https://ap-east-1.console.aws.amazon.com/cloudformation/home?region=ap-east-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Asia Pacific (Mumbai) `ap-south-1` | [Launch Stack](https://ap-south-1.console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Asia Pacific (Seoul) `ap-northeast-2` | [Launch Stack](https://ap-northeast-2.console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Asia Pacific (Singapore) `ap-southeast-1` | [Launch Stack](https://ap-southeast-1.console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Asia Pacific (Sydney) `ap-southeast-2` | [Launch Stack](https://ap-southeast-2.console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Asia Pacific (Tokyo) `ap-northeast-1` | [Launch Stack](https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Europe (Frankfurt) `eu-central-1` | [Launch Stack](https://eu-central-1.console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Europe (Ireland) `eu-west-1` | [Launch Stack](https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Europe (London) `eu-west-2` | [Launch Stack](https://eu-west-2.console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Europe (Paris) `eu-west-3` | [Launch Stack](https://eu-west-3.console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Europe (Stockholm) `eu-north-1` | [Launch Stack](https://eu-north-1.console.aws.amazon.com/cloudformation/home?region=eu-north-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| Middle East (Bahrain) `me-south-1` | [Launch Stack](https://me-south-1.console.aws.amazon.com/cloudformation/home?region=me-south-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
-| South America (São Paulo) `sa-east-1` | [Launch Stack](https://sa-east-1.console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/create/review?templateURL=https://chaos-ssm-documents.s3.amazonaws.com/cfn-chaos-ssm.yml&stackName=ChaosSsm)|
