@@ -74,7 +74,9 @@ mainSteps:
       if  [[ "{{ InstallDependencies }}" == True ]] ; then
         echo "Installing required dependencies"
         if [ -f  "/etc/system-release" ] ; then
-          if cat /etc/system-release | grep -i 'Amazon Linux' ; then
+          if cat /etc/system-release | grep -i 'Amazon Linux release 2023' ; then
+            sudo dnf -y install iptables at
+          elif cat /etc/system-release | grep -i 'Amazon Linux' ; then
             yum -y install iptables at
           else
             echo "There was a problem installing dependencies."

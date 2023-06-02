@@ -88,12 +88,14 @@ mainSteps:
       if  [[ "{{ InstallDependencies }}" == True ]] ; then
         echo "Installing required dependencies"
         if [ -f  "/etc/system-release" ] ; then
-          if cat /etc/system-release | grep -i 'Amazon Linux' ; then
+          if cat /etc/system-release | grep -i 'Amazon Linux release 2023' ; then
+            sudo dnf -y install iproute-tc jq at
+          elif cat /etc/system-release | grep -i 'Amazon Linux' ; then
             sudo amazon-linux-extras install testing
             sudo yum -y install tc jq at
           else
             echo "There was a problem installing dependencies."
-            exit 1
+            #exit 1
           fi
         elif cat /etc/issue | grep -i Ubuntu ; then
           sudo apt-get update -y
@@ -104,7 +106,7 @@ mainSteps:
         fi
       else
         echo "Dependencies are not installed - Please set InstallDependencies to True."
-        exit 1
+        #exit 1
       fi
 - action: aws:runShellScript
   name: FaultInjection
