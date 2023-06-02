@@ -106,7 +106,7 @@ mainSteps:
         fi
       else
         echo "Dependencies are not installed - Please set InstallDependencies to True."
-        #exit 1
+        exit 1
       fi
 - action: aws:runShellScript
   name: FaultInjection
