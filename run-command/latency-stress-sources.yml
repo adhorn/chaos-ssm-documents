@@ -95,7 +95,7 @@ mainSteps:
             sudo yum -y install tc jq at
           else
             echo "There was a problem installing dependencies."
-            #exit 1
+            exit 1
           fi
         elif cat /etc/issue | grep -i Ubuntu ; then
           sudo apt-get update -y
