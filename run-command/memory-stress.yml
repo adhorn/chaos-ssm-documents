@@ -64,7 +64,9 @@ mainSteps:
       if  [[ "{{ InstallDependencies }}" == True ]] ; then
         echo "Installing required dependencies"
         if [ -f  "/etc/system-release" ] ; then
-          if cat /etc/system-release | grep -i 'Amazon Linux' ; then
+          if cat /etc/system-release | grep -i 'Amazon Linux release 2023' ; then
+            sudo dnf -y install stress-ng
+          elif cat /etc/system-release | grep -i 'Amazon Linux' ; then
             # Use amazon-linux-extras if available (Amazon Linux 2). Don't need it otherwise (Amazon Linux 1)
             which amazon-linux-extras 2>/dev/null 1>&2 && sudo amazon-linux-extras install testing
             sudo yum -y install stress-ng
