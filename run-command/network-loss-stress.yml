@@ -67,7 +67,8 @@ mainSteps:
         echo "Installing required dependencies"
         if [ -f  "/etc/system-release" ] ; then
           if cat /etc/system-release | grep -i 'Amazon Linux release 2023' ; then
-            sudo dnf -y install iproute-tc at        
+            sudo dnf -y install iproute-tc at
+            sudo dnf -y install bind-utils
           elif cat /etc/system-release | grep -i 'Amazon Linux' ; then
             sudo amazon-linux-extras install testing
             sudo yum -y install tc at
